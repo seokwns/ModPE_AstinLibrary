@@ -470,7 +470,8 @@ pe.seize.graphics = {
 			buffer.putInt(NO_COLOR);
 			buffer.putInt(NO_COLOR);
 			buffer.putInt(NO_COLOR);
-			var npd = new drawable.NinePatchDrawable(mc.ctx.getResources(), bitmap, buffer.array(), new android.graphics.Rect(), null);
+			
+			var npd = new drawable.NinePatchDrawable(pe.getContext().getResources(), bitmap, buffer.array(), new android.graphics.Rect(), null);
 			
 			return npd;
 		},
