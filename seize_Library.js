@@ -154,9 +154,10 @@ pe.seize.widget.Button = function(context) {
 		PRESSED : null,
 		UNPRESSED : null
 	};
+	this.gravity = Gravity.CENTER;
 	this.listener = function() {};
 	this.showing = false;
-	this.drag = false;
+	this.dragMode = false;
 	this.window = null;
 	
 	this.textSize = 14;
@@ -184,6 +185,12 @@ pe.seize.widget.Button.prototype = {
 	
 	getText : function() {
 		return this.text;
+	},
+	
+	setGravity : function(gravity) {
+		this.gravity = gravity;
+		
+		return this;
 	},
 	
 	setLayoutParams : function(width, height) {
@@ -219,7 +226,9 @@ pe.seize.widget.Button.prototype = {
 	},
 	
 	setDragMode : function(type) {
-		this.drag = type;
+		this.dragMode = type;
+		
+		return this;
 	},
 	
 	update : function(x, y, width, height) {
@@ -247,7 +256,7 @@ pe.seize.widget.Button.prototype = {
 	},
 	
 	getDragMode : function() {
-		return this.drag;
+		return this.dragMode;
 	},
 	
 	isShowing : function() {
@@ -293,13 +302,18 @@ pe.android.widget = {
 		if(textColor != null) btn.setTextColor(textColor);
 		if(textSize != null) btn.setTextSize(textSize);
 		if(drawable != null) btn.setBackgroundDrawable(drawable);
-		btn.setLayoutParams(new Params(width, height);
+		btn.setLayoutParams(new Params(width, height));
 		
 		return btn;
 	},
 	
 	TextView : function(context, text, textColor, textSize, width, height, drawable) {
-		
+		var tv = new TextView(context);
+		tv.setText(text);
+		if(textColor != null) tv.setTextColor(textColor);
+		if(textSize != null) tv.setTextSize(textSize);
+		if(drawable != null) tv.setBackgroundDrawable(drawable);
+		btn.setLayoutParams(new Params(width, height));
 	},
 	
 	ProgressBar : function(context, type, progress, max) {
@@ -546,13 +560,6 @@ pe.seize.graphics = {
 };
 
 
-pe.seize.graphics.Palette.prototype = {
-	addColor : function(name, color) {
-		this.colors[name] = color;
-	}
-};
-
-
 pe.seize.Utils = {
 	
 	render : function(view, gravity, x, y) {
@@ -619,6 +626,25 @@ pe.seize.Utils = {
 			BIS.close();
 			return true;
 		});
+	},
+	
+	UpdateCenter : {
+		
+		CheckUpdate : function() {
+			
+		},
+		
+		getLastVersion : function() {
+			
+		},
+		
+		getChangeLog : function() {
+			
+		},
+		
+		UpdateWindow : function() {
+			
+		}
 	}
 };
 
@@ -641,9 +667,17 @@ pe.seize.Math = {};
 * @return {Boolean}
 */
 pe.seize.Math.isPrime = function(number) {
-	if(number % 2 === 0 && number !== 2) return false;
-	if(number === 2) return true;
-	for(var tmp = 1; tmp * tmp <= number; tmp += 2) if(!(number % tmp)) return true;
+	if(number % 2 === 0 && number !== 2) 
+		return false;
+	
+	if(number === 2) 
+		return true;
+	
+	for(var tmp = 1; tmp * tmp <= number; tmp += 2) {
+		if(!(number % tmp)) 
+			return true;
+	}
+	
 	return false;
 };
 
@@ -655,10 +689,16 @@ pe.seize.Math.isPrime = function(number) {
 */
 pe.seize.Math.Factorization = function(number) {
 	for(var i = 2, tmp = number, nums = []; i * i <= number; i += 2) {
-		while(!(tmp % i)) tmp /= i, nums.push(i);
-		if(i === 2) i --;
+		while(!(tmp % i)) {
+			tmp /= i; 
+			nums.push(i);
+		}
+		
+		if(i === 2) 
+			i --;
 	}
-	if(tmp !== 1) nums.push(tmp);
+	if(tmp !== 1) 
+		nums.push(tmp);
 	
 	return nums;
 };
@@ -675,7 +715,8 @@ pe.seize.Math.divisor = function(number) {
 	nums.push(1);
 	while(tmp < number) {
 		tmp++;
-		if(number % tmp === 0 && this.isPrime(tmp)) nums.push(tmp);
+		if(number % tmp === 0 && this.isPrime(tmp)) 
+			nums.push(tmp);
 	}
 	nums.push(number);
 	
@@ -749,8 +790,12 @@ pe.seize.Math.hypot = function() {
 * @return {Number}
 */
 pe.seize.Math.getGCD = function(num1, num2) {
-	if(num1 < num2) return this.getGCD(num2, num1); 
-	else if(num1 % num2 === 0) return num2; 
+	if(num1 < num2) 
+		return this.getGCD(num2, num1); 
+	
+	else if(num1 % num2 === 0) 
+		return num2; 
+	
 	else return this.getGCD(num1, num1 % num2); 
 };
 
@@ -780,7 +825,9 @@ pe.seize.Math.random = function(start, end, prime) {
 	while(true) {
 		result = Math.floor(Math.random() * range + start);
 		if(prime) {
-			if(this.isPrime(result)) if(result !== 1) return result;
+			if(this.isPrime(result)) 
+				if(result !== 1) 
+					return result;
 		}
 		else return result;
 	}
@@ -914,6 +961,7 @@ pe.seize.String.reverse = function(str) {
 pe.seize.String.shuffle = function(str) {
 	for(var _str = str.split(""), n = _str.length, i = n - 1; i > 0; i--) {
 		var index = Math.floor(Math.random() * (i + 1)), tmp = _str[i];
+		
 		_str[i] = _str[index], _str[index] = tmp;
 	}
 	return a.join("");
@@ -970,7 +1018,10 @@ pe.seize.Array.mode = function(arr) {
 	_arr = this.sort(arr);
 	for(var i = 0; i < _arr.length; i++) {
 		n.push(0);
-		for(var j = 0; j < _arr.length; j++) if(_arr[i] === _arr[j]) n[i]++;
+		for(var j = 0; j < _arr.length; j++) {
+			if(_arr[i] === _arr[j]) 
+				n[i]++;
+		}
 		
 		if(n[i] > max) max = n[i], md = i;
 	}
@@ -988,8 +1039,12 @@ pe.seize.Array.mode = function(arr) {
 pe.seize.Array.equals = function(a, b) {
 	var index = -1, equals = true;
 	
-	if(a.length !== b.length) return false;
-	while(++index <= a.length) if(a[index] !== b[index]) equals = false;
+	if(a.length !== b.length) 
+		return false;
+	
+	while(++index <= a.length) 
+		if(a[index] !== b[index]) 
+			equals = false;
 	
 	return equals;
 };
@@ -1001,9 +1056,13 @@ pe.seize.Array.equals = function(a, b) {
 * @return {Array}
 */
 pe.seize.Array.sort = function(arr) {
-	if(arr.length === 0) return [];
+	if(arr.length === 0) 
+		return [];
+	
 	for(var i = 1, left = [], right = [], first = arr[0]; i < arr.length; i++) {
-		if(arr[i] < first) left.push(arr[i]);
+		if(arr[i] < first) 
+			left.push(arr[i]);
+		
 		else right.push(arr[i]);
 	}
 	
@@ -1032,7 +1091,9 @@ pe.seize.Vector2.prototype = {};
 * @return {Number}
 */
 pe.seize.Vector2.prototype.getDistance = function(x, y) {
-	if(x instanceof pe.seize.Vector2) return Math.sqrt(Math.pow((this.x - x.x), 2) + Math.pow((this.y - x.y), 2));
+	if(x instanceof pe.seize.Vector2) 
+		return Math.sqrt(Math.pow((this.x - x.x), 2) + Math.pow((this.y - x.y), 2));
+	
 	return Math.sqrt(Math.pow((this.x - x), 2) + Math.pow((this.y - y), 2));
 };
 
@@ -1044,7 +1105,9 @@ pe.seize.Vector2.prototype.getDistance = function(x, y) {
 * @return {pe.seize.Vector2}
 */
 pe.seize.Vector2.prototype.add = function(x, y) {
-	if(x instanceof pe.seize.Vector2) return new pe.seize.Vector2(this.x + x.x, this.y + x.y);
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(this.x + x.x, this.y + x.y);
+	
 	return new pe.seize.Vector2(this.x + x, this.y + y);
 };
 
@@ -1056,7 +1119,9 @@ pe.seize.Vector2.prototype.add = function(x, y) {
 * @return {pe.seize.Vector2}
 */
 pe.seize.Vector2.prototype.subtract = function(x, y) {
-	if(x instanceof pe.seize.Vector2) return new pe.seize.Vector2(this.x - x.x, this.y - x.y);
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(this.x - x.x, this.y - x.y);
+	
 	return new pe.seize.Vector2(this.x - x, this.y - y);
 };
 
@@ -1067,7 +1132,9 @@ pe.seize.Vector2.prototype.subtract = function(x, y) {
 * @param {Number} y
 */
 pe.seize.Vector2.prototype.set = function(x, y) {
-	if(x instanceof pe.seize.Vector2) return new pe.seize.Vector2(x.x, x.y);
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(x.x, x.y);
+	
 	return new pe.seize.Vector2(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
@@ -1079,7 +1146,9 @@ pe.seize.Vector2.prototype.set = function(x, y) {
 * @return {Boolean}
 */
 pe.seize.Vector2.prototype.equals = function(x, y) {
-	if(x instanceof pe.seize.Vector2) return this.x === x.x && this.y === x.y;
+	if(x instanceof pe.seize.Vector2) 
+		return this.x === x.x && this.y === x.y;
+	
 	return this.x === Math.floor(x) && this.y === Math.floor(y);
 };
 
@@ -1150,7 +1219,9 @@ pe.seize.Vector3.prototype = {};
 * @param {Number} z
 */
 pe.seize.Vector3.prototype.set = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) return new pe.seize.Vector3(x.x, x.y, x.z);
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(x.x, x.y, x.z);
+	
 	return new pe.seize.Vector3(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
@@ -1163,7 +1234,9 @@ pe.seize.Vector3.prototype.set = function(x, y, z) {
 * @return {pe.seize.Vector3}
 */
 pe.seize.Vector3.prototype.add = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) return new pe.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
+	
 	return new pe.seize.Vector3(this.x + Math.floor(x), this.y + Math.floor(y), this.z + Math.floor(z));
 };
 
@@ -1176,7 +1249,9 @@ pe.seize.Vector3.prototype.add = function(x, y, z) {
 * @return {pe.seize.Vector3}
 */
 pe.seize.Vector3.prototype.subtract= function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) return new pe.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
+	
 	return new pe.seize.Vector3(this.x - Math.floor(x), this.y - Math.floor(y), this.z - Math.floor(z));
 };
 
@@ -1189,7 +1264,9 @@ pe.seize.Vector3.prototype.subtract= function(x, y, z) {
 * @return {Boolean}
 */
 pe.seize.Vector3.prototype.equals = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) return this.x === x.x && this.y === x.y && this.z === x.z;
+	if(x instanceof pe.seize.Vector3) 
+		return this.x === x.x && this.y === x.y && this.z === x.z;
+	
 	return this.x === Math.floor(x) && this.y === Math.floor(y) && this.z === Math.floor(z);
 };
 
@@ -1220,7 +1297,9 @@ pe.seize.Vector3.prototype.toString = function() {
 * @return {Number}
 */
 pe.seize.Vector3.prototype.getDistance = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) return Math.sqrt(Math.pow(this.x - x.x, 2) + Math.pow(this.y - x.y, 2) + Math.pow(this.z - x.z, 2));
+	if(x instanceof pe.seize.Vector3) 
+		return Math.sqrt(Math.pow(this.x - x.x, 2) + Math.pow(this.y - x.y, 2) + Math.pow(this.z - x.z, 2));
+	
 	return Math.sqrt(Math.pow(this.x - Math.floor(x), 2) + Math.pow(this.y - Math.floor(y), 2) + Math.low(this.z - Math.floor(z), 2));
 };
 
@@ -1257,8 +1336,11 @@ pe.seize.Vector3.prototype.getZ = function() {
 * @namespace
 */
 pe.seize.Entity = function(ent) {
-	if(ent instanceof pe.seize.Entity) this.ent = ent.ent;
-	else if(typeof ent === "number") this.ent = ent;
+	if(ent instanceof pe.seize.Entity) 
+		this.ent = ent.ent;
+		
+	else if(typeof ent === "number") 
+		this.ent = ent;
 };
 
 
@@ -1329,8 +1411,12 @@ pe.seize.Entity.prototype = {};
 */
 pe.seize.Entity.prototype.getNearEnity = function(range) {
 	var vec;
-	if(ent instanceof pe.seize.Entity) vec = new pe.seize.Vector3(e);
-	else if(typeof ent === "number") vec = new pe.seize.Vector3(new pe.seize.Entity(e));
+	
+	if(ent instanceof pe.seize.Entity) 
+		vec = new pe.seize.Vector3(e);
+		
+	else if(typeof ent === "number") 
+		vec = new pe.seize.Vector3(new pe.seize.Entity(e));
 	
 	return this.getAll().filter(function(e) {
 		var vec2 = new pe.seize.Vector3(new pe.seize.Entity(e));
@@ -1345,7 +1431,9 @@ pe.seize.Entity.prototype.getNearEnity = function(range) {
 * @return {Number}
 */
 pe.seize.Entity.prototype.getDistance = function(e) {
-	if(e instanceof pe.seize.Entity) return new pe.seize.Vector3(new pe.seize.Entity(this.ent)).getDistance(new pe.seize.Vector3(new pe.seize.Entity(e)));
+	if(e instanceof pe.seize.Entity) 
+		return new pe.seize.Vector3(new pe.seize.Entity(this.ent)).getDistance(new pe.seize.Vector3(new pe.seize.Entity(e)));
+		
 	return Math.sqrt(Math.pow(Entity.getX(this.ent) - Entity.getX(e), 2) + Math.pow(Entity.getY(this.ent) - Entity.getY(e), 2) + Math.pow(Entity.getZ(this.ent) - Entity.getZ(e), 2));
 };
 
@@ -1392,7 +1480,6 @@ pe.seize.Entity.prototype.setVel = function(x, y, z) {
 	if(y != null) Entity.setVelY(this.ent, y);
 	if(z != null) Entity.setVelZ(this.ent, z);
 };
-
 
 
 const createFont = function(text, color, size, length, drawable, gravity) { //이스케이프 시퀀스 인식 업데이트 하기.
