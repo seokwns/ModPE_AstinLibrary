@@ -163,6 +163,12 @@ pe.seize.widget.Button = function(context) {
 	this.textSize = 14;
 	this.textColor = [pe.seize.graphics.Color.PLAIN, pe.seize.graphics.Color.IMPORTANT];
 	this.drawable = null;
+	
+	this.position = {
+		x : null,
+		y : null,
+		gravity : null
+	};
 };
 
 
@@ -247,6 +253,10 @@ pe.seize.widget.Button.prototype = {
 		return this.params.HEIGHT;
 	},
 	
+	getPosition : function() {
+		return this.position;
+	},
+	
 	getTextSize : function() {
 		return this.textSize;
 	},
@@ -276,7 +286,190 @@ pe.seize.widget.Button.prototype = {
 			that.window.setWidth(that.params.WIDTH);
 			that.window.setHeight(that.params.HEIGHT);
 			that.window.showAtLocation(pe.getContext().getWindow().getDecorView(), gravity, x, y);
+			
 			that.showing = true;
+			that.position.x = x;
+			that.position.y = y;
+			that.position.gravity = gravity;
+		});
+	},
+	
+	dismiss : function() {
+		var that = this;
+		
+		uiThread(function() {
+			if(that.window != null) {
+				that.window.dismiss();
+				that.window = null;
+				that.showing = false;
+			}
+		});
+	}
+};
+
+
+pe.seize.widget.ToggleButton = function(context) {
+	this.tag = "[ (Object) pe.seize.widget, ToggleButton ]";
+	this.context = context;
+	this.btn = new ToggleButton(context);
+	
+	this.text = "";
+	this.params = {
+		WIDTH : 35,
+		HEIGHT : 35
+	};
+	this.fonts = {
+		PRESSED : null,
+		UNPRESSED : null
+	};
+	this.gravity = Gravity.CENTER;
+	this.listener = function() {};
+	this.showing = false;
+	this.dragMode = false;
+	this.window = null;
+	
+	this.textSize = 14;
+	this.textColor = [pe.seize.graphics.Color.PLAIN, pe.seize.graphics.Color.IMPORTANT];
+	this.drawable = null;
+	this.checked = false;
+	
+	this.position = {
+		x : null,
+		y : null,
+		gravity : null
+	};
+};
+
+
+pe.seize.widget.ToggleButton.prototype = {
+	
+	toString : function() {
+		return this.tag;
+	},
+	
+	setText : function(text) {
+		this.text = text;
+		if(this.showing) {
+			
+		} else {
+			
+		}
+		
+		return this;
+	},
+	
+	getText : function() {
+		return this.text;
+	},
+	
+	setGravity : function(gravity) {
+		this.gravity = gravity;
+		
+		return this;
+	},
+	
+	setLayoutParams : function(width, height) {
+		this.params.WIDTH = width;
+		this.params.HEIGHT = height;
+		this.btn.setLayoutParams(new Params(width, height));
+		
+		return this;
+	},
+	
+	setCheckedChangeListener : function(listener) {
+		this.listener = listener;
+		
+		return this;
+	},
+	
+	setBackgroundDrawable : function(drawable) {
+		this.drawable = drawable;
+		
+		return this;
+	},
+	
+	setChecked : function(checked) {
+		this.checked = checked;
+		
+		return this;
+	},
+	
+	setTextColor : function(color, color2) {
+		this.color = [color, color2];
+		
+		return this;
+	},
+	
+	setTextSize : function(size) {
+		this.textSize = size;
+		
+		return this;
+	},
+	
+	setDragMode : function(type) {
+		this.dragMode = type;
+		
+		return this;
+	},
+	
+	update : function(x, y, width, height) {
+		if(this.window != null) {
+			this.window.update(x, y, (width == null? this.params.WIDTH : width), (height == null? this.params.HEIGHT : height), true);
+		}
+		
+		return this;
+	},
+	
+	getWidth : function() {
+		return this.params.WIDTH;
+	},
+	
+	getHeight : function() {
+		return this.params.HEIGHT;
+	},
+	
+	getPosition : function() {
+		return this.position;
+	},
+	
+	getTextSize : function() {
+		return this.textSize;
+	},
+	
+	getTextColor : function() {
+		return this.textColor;
+	},
+	
+	getDragMode : function() {
+		return this.dragMode;
+	},
+	
+	isShowing : function() {
+		return this.showing;
+	},
+	
+	isChecked : function() {
+		return this.checked;
+	},
+	
+	get : function() {
+		this.showing = true;
+	},
+	
+	show : function(gravity, x, y) {
+		var that = this;
+		
+		uiThread(function() {
+			that.window = new PopupWindow();
+			that.window.setContentView(that.get());
+			that.window.setWidth(that.params.WIDTH);
+			that.window.setHeight(that.params.HEIGHT);
+			that.window.showAtLocation(pe.getContext().getWindow().getDecorView(), gravity, x, y);
+			
+			that.showing = true;
+			that.position.x = x;
+			that.position.y = y;
+			that.position.gravity = gravity;
 		});
 	},
 	
@@ -313,7 +506,9 @@ pe.android.widget = {
 		if(textColor != null) tv.setTextColor(textColor);
 		if(textSize != null) tv.setTextSize(textSize);
 		if(drawable != null) tv.setBackgroundDrawable(drawable);
-		btn.setLayoutParams(new Params(width, height));
+		tv.setLayoutParams(new Params(width, height));
+		
+		return tv;
 	},
 	
 	ProgressBar : function(context, type, progress, max) {
@@ -515,7 +710,7 @@ pe.seize.graphics = {
 			canvas.drawBitmap(Bitmap.createScaledBitmap(part6, part3.getWidth(), height-bm.getHeight() + stretchHeight, false), width - bm.getWidth() + stretchWidth + x, y, null);
 			canvas.drawBitmap(part7, 0, height - bm.getHeight() + stretchHeight + y, null);
 			canvas.drawBitmap(Bitmap.createScaledBitmap(part8, width-bm.getWidth() + stretchWidth, part7.getHeight(), false), x, height - bm.getHeight() + stretchHeight + y, null);
-			canvas.drawBitmap(part9, width-bm.getWidth() + stretchWidth + x, height-bm.getHeight() + stretchHeight + y, null);
+			canvas.drawBitmap(part9, width - bm.getWidth() + stretchWidth + x, height-bm.getHeight() + stretchHeight + y, null);
 			
 			return new BitmapDrawable(blank);
 		}
@@ -531,7 +726,10 @@ pe.seize.graphics = {
 	
 	getTexture : function(path) {
 		var texture = ModPE.openInputStreamFromTexturePack("images/" + path), type = path.split(".");
-		if(type[type.length] === "tga") return net.zhuoweizhang.mcpelauncher.texture.tga.TGALoader.load(texture, false);
+		
+		if(type[type.length] === "tga") 
+			return net.zhuoweizhang.mcpelauncher.texture.tga.TGALoader.load(texture, false);
+			
 		else return BitmapFactory.decodeStream(texture);
 	},
 	
