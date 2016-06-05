@@ -13,7 +13,14 @@ const pe = {
 	
 	seize : {},
 	
-	android : {}
+	android : {},
+	
+	info : {
+		VERSION : 1,
+		ChangeLog : [],
+		Maker : "seizePE(moona0915)"
+		E_Mail : "moona0915@naver.com"
+	}
 };
 
 
@@ -240,6 +247,10 @@ pe.seize.widget.Button.prototype = {
 	update : function(x, y, width, height) {
 		if(this.window != null) {
 			this.window.update(x, y, (width == null? this.params.WIDTH : width), (height == null? this.params.HEIGHT : height), true);
+			this.position.x = x;
+			this.position.y = y;
+			this.params.WIDTH = width;
+			this.params.HEIGHT = height;
 		}
 		
 		return this;
@@ -739,7 +750,8 @@ pe.seize.graphics = {
 			return i.name;
 		});
 		
-		if(texture.indexOf(name) < 0) return Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_8888);
+		if(texture.indexOf(name) < 0) 
+			return Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_8888);
 		
 		var uvs = meta[meta_map.indexOf(name)].uvs[data],
 			img = this.getTexture("items-opaque.png"),
@@ -789,7 +801,7 @@ pe.seize.Utils = {
 	},
 	
 	getNetworkInfo : function() {
-		var manager = mc.ctx.getSystemService(mc.ctx.CONNECTIVITY_SERVICE),
+		var manager = pe.getContext().getSystemService(pe.getContext().CONNECTIVITY_SERVICE),
 			mobile = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting(),
 			wifi = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
 	
@@ -829,7 +841,19 @@ pe.seize.Utils = {
 	UpdateCenter : {
 		
 		CheckUpdate : function() {
+			var that = this;
 			
+			thread(function() {
+				var url = new java.net.URL("https://raw.githubusercontent.com/RetroPE/seize_ModPE_Library/master/Version").openStream(),
+					BR = new BufferedReader(new InputStreamReader(url)),
+					vers = BR.readLine();
+				
+				pe.info.VERSION = parseInt(vers);
+				
+				if(!vers.equals(new java.lang.String(MC.info.VERSION))) {
+					that.UpdateWindow();
+                }
+			});
 		},
 		
 		getLastVersion : function() {
@@ -1206,29 +1230,6 @@ pe.seize.Array.average = function(arr) {
 
 
 /**
-* @배열의 최빈값을 구합니다.
-* @param {Array} arr
-* @return {Number}
-*/
-pe.seize.Array.mode = function(arr) {
-	var n = new Array(), _arr, max = 0, md = 0;
-	
-	_arr = this.sort(arr);
-	for(var i = 0; i < _arr.length; i++) {
-		n.push(0);
-		for(var j = 0; j < _arr.length; j++) {
-			if(_arr[i] === _arr[j]) 
-				n[i]++;
-		}
-		
-		if(n[i] > max) max = n[i], md = i;
-	}
-	
-	return _arr[md];
-};
-
-
-/**
 * @두 배열이 일치하는 판별합니다.
 * @param {Array} a
 * @param {Array} b
@@ -1240,9 +1241,10 @@ pe.seize.Array.equals = function(a, b) {
 	if(a.length !== b.length) 
 		return false;
 	
-	while(++index <= a.length) 
+	while(++index <= a.length) {
 		if(a[index] !== b[index]) 
 			equals = false;
+	}
 	
 	return equals;
 };
@@ -1680,6 +1682,20 @@ pe.seize.Entity.prototype.setVel = function(x, y, z) {
 };
 
 
+/**
+* @마인크래프크 폰트 비트맵을 생성합니다.
+* @param {String} text
+* @param {Number|android.graphics.Color} color
+* @param {Number} size
+* @param {Array} length
+* @param {android.graphics.drawable.Drawable} drawable
+* @param {Number} gravity
+* @return {LayerDrawable} font Drawable
+*/
+
+/*
+* 속도 개선 및 이스케이프 시퀀스 인식 추가하기
+*/
 const createFont = function(text, color, size, length, drawable, gravity) { //이스케이프 시퀀스 인식 업데이트 하기.
 	function isDefault(str) { 
 		return /^[A-Za-z0-9"'&\+\-!\?<>~%():.]+$/.test(str);
