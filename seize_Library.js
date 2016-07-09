@@ -5,8 +5,9 @@
 
 
 const pe = {
+	
 	getContext : function() {
-		com.mojang.minecraftpe.MainActivity.currentMainActivity.get();
+		return com.mojang.minecraftpe.MainActivity.currentMainActivity.get();
 	},
 	
 	ModPE : {},
@@ -15,13 +16,64 @@ const pe = {
 	
 	android : {},
 	
+	Math : {}, String : {}, Array : {}, Vector2 : {}, Vector3 : {},
+	
 	info : {
 		VERSION : 1,
 		ChangeLog : [],
-		Maker : "seizePE(moona0915)"
+		Maker : "seizePE(moona0915)",
 		E_Mail : "moona0915@naver.com"
 	}
 };
+
+
+const Utils = {
+	
+	Toast : function(text, duration) {
+		pe.getContext().runOnUiThread(new Runnable({
+			run : function(){
+				Toast.makeText(pe.getContext(), text, (duration == null? Toast.LENGTH_SHORT : duration)).show();
+			}
+		}));
+	},
+	
+	uiThread : function(func) {
+		pe.getContext().runOnUiThread(new Runnable({ run : function() {
+			try { 
+				func(); 
+			} catch(err) { 
+				pe.Debug(err); 
+			}
+		}}));
+	},
+	
+	Thread : function(func) {
+		new Thread(new Runnable({ run : function() {
+			try { 
+				func(); 
+			} catch(err) { 
+				pe.Debug(err); 
+			}
+		}})).start();
+	},
+	
+	Debug : function(err) {
+		pe.getContext().runOnUiThread(new Runnable({ run : function() {
+			try {
+				var dialog = new android.app.AlertDialog.Builder(pe.getContext());
+				dialog.setTitle("Error");
+				dialog.setMessage("Error\n\n - " + err.name + "\n - " + (err.lineNumber + 1) + "\n\n" + err.message);
+				dialog.show();
+			} catch(err) { 
+				print((err.lineNumber + 1) + " # " + err.message); 
+			}
+		}}));
+	},
+	
+	getAbsolutePath : function() {
+		return android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+	}
+}
 
 
 var Button = android.widget.Button,
@@ -65,6 +117,7 @@ var Button = android.widget.Button,
 	FileOutputStream = java.io.FileOutputStream,
 	FileInputStream = java.io.FileInputStream,
 	BufferedReader = java.io.BufferedReader,
+	BufferedWriter = java.io.BufferedWriter,
 	BufferedInputStream = java.io.BufferedInputStream,
 	BufferedOutputStream = java.io.BufferedOutputStream,
 	InputStreamReader = java.io.InputStreamReader,
@@ -78,430 +131,30 @@ var Button = android.widget.Button,
 	RecognizerIntent = android.speech.RecognizerIntent,
 	Thread = java.lang.Thread,
 	Runnable = java.lang.Runnable,
-	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, ctx.getResources().getDisplayMetrics());
+	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, ctx.getResources().getDisplayMetrics()),
+	ServerSocket = java.net.ServerSocket;
+	Socket = java.net.Socket;
 
 
+var client_socket, client_bw;
 
 
-const toast = function(text, duration) {
-	pe.getContext().runOnUiThread(new Runnable({
-		run : function(){
-			Toast.makeText(pe.getContext(), text, duration).show();
-		}
-	}));
-};
-
-
-const getAbsolutePath = function() {
-	return android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
-};
-
-
-const uiThread = function(func) {
-	pe.getContext().runOnUiThread(new Runnable({
-		run : function() {
-			try {
-				func();
-			} catch(err) {
-				debug(err);
-			}
-		}
-	}));
-};
-
-
-const thread = function(func) {
-	new Thread(new Runnable({
-		run : function() {
-			try {
-				func();
-			} catch(err) {
-				debug(err);
-			}
-		}
-	})).start();
-};
-
-
-const debug = function(err) {
-	pe.getContext().runOnUiThread(new Runnable({
-		run : function() {
-			try {
-				var dialog = new android.app.AlertDialog.Builder(pe.getContext());
-				dialog.setTitle("Error");
-				dialog.setMessage("Error\n\n - " + err.name + "\n - " + (err.lineNumber + 1) + "\n\n" + err.message);
-				dialog.show();
-			} catch(err) {
-				print((err.lineNumber + 1) + " # " + err.message);
-			}
-		}
-	}));
-};
-
-
-pe.seize.widget = {};
-
-
-pe.seize.widget.DragMode = {
-	ALWAYS_DRAG : 0, NO_DRAG : -1, HORIZONTAL_DRAG : 2, VERTICAL_DRAG : 3
-};
-
-
-pe.seize.widget.Button = function(context) {
-	this.tag = "[ (Object) pe.seize.widget, Button ]";
-	this.context = context;
-	this.btn = new Button(context);
+pe.seize.widget = {
 	
-	this.text = "";
-	this.params = {
-		WIDTH : 35,
-		HEIGHT : 35
-	};
-	this.fonts = {
-		PRESSED : null,
-		UNPRESSED : null
-	};
-	this.gravity = Gravity.CENTER;
-	this.listener = function() {};
-	this.showing = false;
-	this.dragMode = false;
-	this.window = null;
-	
-	this.textSize = 14;
-	this.textColor = [pe.seize.graphics.Color.PLAIN, pe.seize.graphics.Color.IMPORTANT];
-	this.drawable = null;
-	
-	this.position = {
-		x : null,
-		y : null,
-		gravity : null
-	};
-};
-
-
-pe.seize.widget.Button.prototype = {
-	
-	toString : function() {
-		return this.tag;
-	},
-	
-	setText : function(text) {
-		this.text = text;
-		if(this.showing) {
-			
-		} else {
-			
-		}
+	Button : function() {
 		
-		return this;
 	},
 	
-	getText : function() {
-		return this.text;
-	},
-	
-	setGravity : function(gravity) {
-		this.gravity = gravity;
+	ToggleButton : function() {
 		
-		return this;
-	},
-	
-	setLayoutParams : function(width, height) {
-		this.params.WIDTH = width;
-		this.params.HEIGHT = height;
-		this.btn.setLayoutParams(new Params(width, height));
-		
-		return this;
-	},
-	
-	setOnClickListener : function(listener) {
-		this.listener = listener;
-		
-		return this;
-	},
-	
-	setBackgroundDrawable : function(drawable) {
-		this.drawable = drawable;
-		
-		return this;
-	},
-	
-	setTextColor : function(color, color2) {
-		this.color = [color, color2];
-		
-		return this;
-	},
-	
-	setTextSize : function(size) {
-		this.textSize = size;
-		
-		return this;
-	},
-	
-	setDragMode : function(type) {
-		this.dragMode = type;
-		
-		return this;
-	},
-	
-	update : function(x, y, width, height) {
-		if(this.window != null) {
-			this.window.update(x, y, (width == null? this.params.WIDTH : width), (height == null? this.params.HEIGHT : height), true);
-			this.position.x = x;
-			this.position.y = y;
-			this.params.WIDTH = width;
-			this.params.HEIGHT = height;
-		}
-		
-		return this;
-	},
-	
-	getWidth : function() {
-		return this.params.WIDTH;
-	},
-	
-	getHeight : function() {
-		return this.params.HEIGHT;
-	},
-	
-	getPosition : function() {
-		return this.position;
-	},
-	
-	getTextSize : function() {
-		return this.textSize;
-	},
-	
-	getTextColor : function() {
-		return this.textColor;
-	},
-	
-	getDragMode : function() {
-		return this.dragMode;
-	},
-	
-	isShowing : function() {
-		return this.showing;
-	},
-	
-	get : function() {
-		this.showing = true;
-	},
-	
-	show : function(gravity, x, y) {
-		var that = this;
-		
-		uiThread(function() {
-			that.window = new PopupWindow();
-			that.window.setContentView(that.get());
-			that.window.setWidth(that.params.WIDTH);
-			that.window.setHeight(that.params.HEIGHT);
-			that.window.showAtLocation(pe.getContext().getWindow().getDecorView(), gravity, x, y);
-			
-			that.showing = true;
-			that.position.x = x;
-			that.position.y = y;
-			that.position.gravity = gravity;
-		});
-	},
-	
-	dismiss : function() {
-		var that = this;
-		
-		uiThread(function() {
-			if(that.window != null) {
-				that.window.dismiss();
-				that.window = null;
-				that.showing = false;
-			}
-		});
 	}
-};
-
-
-pe.seize.widget.ToggleButton = function(context) {
-	this.tag = "[ (Object) pe.seize.widget, ToggleButton ]";
-	this.context = context;
-	this.btn = new ToggleButton(context);
-	
-	this.text = "";
-	this.params = {
-		WIDTH : 35,
-		HEIGHT : 35
-	};
-	this.fonts = {
-		PRESSED : null,
-		UNPRESSED : null
-	};
-	this.gravity = Gravity.CENTER;
-	this.listener = function() {};
-	this.showing = false;
-	this.dragMode = false;
-	this.window = null;
-	
-	this.textSize = 14;
-	this.textColor = [pe.seize.graphics.Color.PLAIN, pe.seize.graphics.Color.IMPORTANT];
-	this.drawable = null;
-	this.checked = false;
-	
-	this.position = {
-		x : null,
-		y : null,
-		gravity : null
-	};
-};
-
-
-pe.seize.widget.ToggleButton.prototype = {
-	
-	toString : function() {
-		return this.tag;
-	},
-	
-	setText : function(text) {
-		this.text = text;
-		if(this.showing) {
-			
-		} else {
-			
-		}
-		
-		return this;
-	},
-	
-	getText : function() {
-		return this.text;
-	},
-	
-	setGravity : function(gravity) {
-		this.gravity = gravity;
-		
-		return this;
-	},
-	
-	setLayoutParams : function(width, height) {
-		this.params.WIDTH = width;
-		this.params.HEIGHT = height;
-		this.btn.setLayoutParams(new Params(width, height));
-		
-		return this;
-	},
-	
-	setCheckedChangeListener : function(listener) {
-		this.listener = listener;
-		
-		return this;
-	},
-	
-	setBackgroundDrawable : function(drawable) {
-		this.drawable = drawable;
-		
-		return this;
-	},
-	
-	setChecked : function(checked) {
-		this.checked = checked;
-		
-		return this;
-	},
-	
-	setTextColor : function(color, color2) {
-		this.color = [color, color2];
-		
-		return this;
-	},
-	
-	setTextSize : function(size) {
-		this.textSize = size;
-		
-		return this;
-	},
-	
-	setDragMode : function(type) {
-		this.dragMode = type;
-		
-		return this;
-	},
-	
-	update : function(x, y, width, height) {
-		if(this.window != null) {
-			this.window.update(x, y, (width == null? this.params.WIDTH : width), (height == null? this.params.HEIGHT : height), true);
-		}
-		
-		return this;
-	},
-	
-	getWidth : function() {
-		return this.params.WIDTH;
-	},
-	
-	getHeight : function() {
-		return this.params.HEIGHT;
-	},
-	
-	getPosition : function() {
-		return this.position;
-	},
-	
-	getTextSize : function() {
-		return this.textSize;
-	},
-	
-	getTextColor : function() {
-		return this.textColor;
-	},
-	
-	getDragMode : function() {
-		return this.dragMode;
-	},
-	
-	isShowing : function() {
-		return this.showing;
-	},
-	
-	isChecked : function() {
-		return this.checked;
-	},
-	
-	get : function() {
-		this.showing = true;
-	},
-	
-	show : function(gravity, x, y) {
-		var that = this;
-		
-		uiThread(function() {
-			that.window = new PopupWindow();
-			that.window.setContentView(that.get());
-			that.window.setWidth(that.params.WIDTH);
-			that.window.setHeight(that.params.HEIGHT);
-			that.window.showAtLocation(pe.getContext().getWindow().getDecorView(), gravity, x, y);
-			
-			that.showing = true;
-			that.position.x = x;
-			that.position.y = y;
-			that.position.gravity = gravity;
-		});
-	},
-	
-	dismiss : function() {
-		var that = this;
-		
-		uiThread(function() {
-			if(that.window != null) {
-				that.window.dismiss();
-				that.window = null;
-				that.showing = false;
-			}
-		});
-	}
-};
+}
 
 
 pe.android.widget = {
 
-	Button : function(context, text, textColor, textSize, width, height, drawable) {
-		var btn = new Button(context);
+	Button : function(text, textColor, textSize, width, height, drawable) {
+		var btn = new Button(pe.getContext());
 		btn.setText(text);
 		if(textColor != null) btn.setTextColor(textColor);
 		if(textSize != null) btn.setTextSize(textSize);
@@ -511,8 +164,8 @@ pe.android.widget = {
 		return btn;
 	},
 	
-	TextView : function(context, text, textColor, textSize, width, height, drawable) {
-		var tv = new TextView(context);
+	TextView : function(text, textColor, textSize, width, height, drawable) {
+		var tv = new TextView(pe.getContext());
 		tv.setText(text);
 		if(textColor != null) tv.setTextColor(textColor);
 		if(textSize != null) tv.setTextSize(textSize);
@@ -522,12 +175,12 @@ pe.android.widget = {
 		return tv;
 	},
 	
-	ProgressBar : function(context, type, progress, max) {
+	ProgressBar : function(type, progress, max) {
 		
 	},
 	
-	LinearLayout : function(context, orientation, gravity) {
-		var layout = new LinearLayout(context);
+	LinearLayout : function(orientation, gravity) {
+		var layout = new LinearLayout(pe.getContext());
 		layout.setOrientation(orientation);
 		layout.setGravity(gravity);
 		
@@ -538,201 +191,56 @@ pe.android.widget = {
 
 pe.seize.graphics = {
 	
-	drawable : {
-		
-		BUTTON_UNPRESSED : function() {
-			var bitmap = Bitmap.createBitmap(sheet, 8, 32, 8, 8),
-				bit = Bitmap.createScaledBitmap(bitmap, 16  *  DP, 16  *  DP, false);
-					
-			return this.createNinePatch(bit, 4  *  DP, 4  *  DP, 12  *  DP, 14  *  DP);
-		},
-		
-		BUTTON_PRESSED : function() {
-			var bitmap = Bitmap.createBitmap(sheet, 0, 32, 8, 8),
-				bit = Bitmap.createScaledBitmap(bitmap, 16  *  DP, 16  *  DP, false);
-					
-			return this.createNinePatch(bit, 4  *  DP, 4  *  DP, 12  *  DP, 14  *  DP);
-		},
-		
-		TopBarDrawable : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI, 150, 26, 14, 30);
-			for(var i = 0; i < 26; i++) {
-				bitmap.setPixel(2, i, bitmap.getPixel(3, i));
-				bitmap.setPixel(11, i, bitmap.getPixel(10, i));
-			}
-			for(var i = 3; i < 11; i++) {
-				bitmap.setPixel(i, 25, bitmap.getPixel(i, 26));
-				bitmap.setPixel(i, 26, bitmap.getPixel(i, 27));
-				bitmap.setPixel(i, 27, bitmap.getPixel(i, 28));
-				bitmap.setPixel(i, 28, 0x00000000);
-			}
-			for(var i = 0; i < 14; i++) {
-				bitmap.setPixel(i, 25, bitmap.getPixel(4, 25));
-				bitmap.setPixel(i, 26, bitmap.getPixel(4, 26));
-				bitmap.setPixel(i, 27, bitmap.getPixel(4, 27));
-			}
-			var bit = Bitmap.createScaledBitmap(bitmap, 28  *  DP, 60  *  DP, false);
-			
-			return this.createNinePatch(bit, 5  *  DP, 7  *  DP, 46  *  DP, 22  *  DP);
-		},
-		
-		SWITCH_OFF : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI, 160, 206, 38, 19),
-				bit = Bitmap.createScaledBitmap(bitmap, 76 * DP, 38 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		SWITCH_ON : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI, 198, 206, 38, 19),
-				bit = Bitmap.createScaledBitmap(bitmap, 76 * DP, 37 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		UTIL_TOOL : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI2, 134, 0, 28, 28),
-				bit = Bitmap.createScaledBitmap(bitmap,  56 * DP, 56 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		UTIL_SKIN : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI2, 106, 56, 26, 26),
-				bit = Bitmap.createScaledBitmap(bitmap, 54 * DP, 54 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		UTIL_STICK : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI2, 106, 0, 28, 28),
-				bit = Bitmap.createScaledBitmap(bitmap, 56 * DP, 56 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		UTIL_GRAPHIC : function() {
-			var bitmap = Bitmap.createBitmap(touchGUI2, 134, 27, 28, 28),
-				bit = Bitmap.createScaledBitmap(bitmap, 56 * DP, 56 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		BACK_UNPRESSED : function() {
-			var bitmap = Bitmap.createBitmap(sheet, 60, 0, 18, 18),
-				bit = Bitmap.createScaledBitmap(bitmap, 100 * DP, 100 * DP, false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		BACK_PRESSED : function() {
-			var bitmap = Bitmap.createBitmap(sheet, 78, 0, 18, 18),
-				bit = Bitmap.createScaledBitmap(bitmap, 100 * DP, 100 * DP,false);
-					
-			return new BitmapDrawable(bit);
-		},
-		
-		PANEL : function() {
-			var bitmap = Bitmap.createBitmap(sheet, 34, 43, 14, 14),
-				bit = Bitmap.createScaledBitmap(bitmap, 56  *  DP, 56  *  DP, false);
-					
-			return this.createNinePatch(bit, 12  *  DP, 12  *  DP, 44  *  DP, 44  *  DP);
-		},
-		
-		EditTextDrawable : function() { //PlanP님의 MC - Class 소스
-			var O = Color.parseColor("#6B6163"),
-				I = Color.parseColor("#393939"),
-				color = [O, O, O, O, O, O, O, O, O, O, O, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, I, I, I, I, I, I, I, I, I, I, O,
-						 O, O, O, O, O, O, O, O, O, O, O, O];
-					 
-			var bit = Bitmap.createBitmap(12, 12, Bitmap.Config.ARGB_8888);
-			bit.setPixels(color, 0, 12, 0, 0, 12, 12);
-			var bitmap = Bitmap.createScaledBitmap(bit, 24 * DP, 24 * DP, false);
-			
-			return this.createNinePatch(bitmap, 6 * DP, 6 * DP, 18 * DP, 18 * DP);
-		},
-		
-		createNinePatch : function(bitmap, x, y, xx, yy) {
-			var NO_COLOR = 0x00000001,
-				buffer = java.nio.ByteBuffer.allocate(84).order(java.nio.ByteOrder.nativeOrder());
-					
-			buffer.put(0x01);
-			buffer.put(0x02);
-			buffer.put(0x02);
-			buffer.put(0x09);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(0);
-			buffer.putInt(y);
-			buffer.putInt(yy);
-			buffer.putInt(x);
-			buffer.putInt(xx);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			buffer.putInt(NO_COLOR);
-			
-			var npd = new drawable.NinePatchDrawable(pe.getContext().getResources(), bitmap, buffer.array(), new android.graphics.Rect(), null);
-			
-			return npd;
-		},
+	Bitmap : {
 		
 		cutImage : function(bm, x, y, width, height) {
 			return android.graphics.Bitmap.createScaledBitmap(android.graphics.Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
-		scalePatch : function(bm, x, y, stretchWidth, stretchHeight, width, height) {
-			var blank = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888),
-				part1 = Bitmap.createBitmap(bm, 0, 0, x, y),
-				part2 = Bitmap.createBitmap(bm, x, 0, stretchWidth, y),
-				part3 = Bitmap.createBitmap(bm, x + stretchWidth, 0, bm.getWidth() - x - stretchWidth, y),
-				part4 = Bitmap.createBitmap(bm, 0, y, x, stretchHeight),
-				part5 = Bitmap.createBitmap(bm, x, y, stretchWidth, stretchHeight),
-				part6 = Bitmap.createBitmap(bm, x + stretchWidth, y, bm.getWidth() - x - stretchWidth, stretchHeight),
-				part7 = Bitmap.createBitmap(bm, 0, y + stretchHeight, x, bm.getHeight() - y - stretchHeight),
-				part8 = Bitmap.createBitmap(bm, x, y + stretchHeight, stretchWidth, bm.getHeight() - y - stretchHeight),
-				part9 = Bitmap.createBitmap(bm, x + stretchWidth, y + stretchHeight, bm.getWidth() - x - stretchWidth, bm.getHeight() - y - stretchHeight),
+		nienPatch : function(bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) {
+			if(bm.getPixel(0,0) === -9739933 && bm.getWidth() === bm.getHeight())
+				var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565);
+			else
+				var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
+			
+			var part1 = Bitmap.createBitmap(bm, 0, 0, startX, startY),
+				part2 = Bitmap.createBitmap(bm, startX, 0, ninePatchWidth, startY),
+				part3 = Bitmap.createBitmap(bm, startX + ninePatchWidth, 0, bm.getWidth() - startX - ninePatchWidth, startY),
+				part4 = Bitmap.createBitmap(bm, 0, startY, startX, ninePatchHeight),
+				part5 = Bitmap.createBitmap(bm, startX, startY, ninePatchWidth, ninePatchHeight),
+				part6 = Bitmap.createBitmap(bm, startX + ninePatchWidth, startY, bm.getWidth() - startX - ninePatchWidth, ninePatchHeight),
+				part7 = Bitmap.createBitmap(bm, 0, startY + ninePatchHeight, startX, bm.getHeight() - startY - ninePatchHeight),
+				part8 = Bitmap.createBitmap(bm, startX, startY + ninePatchHeight, ninePatchWidth, bm.getHeight() - startY - ninePatchHeight),
+				part9 = Bitmap.createBitmap(bm, startX + ninePatchWidth, startY + ninePatchHeight, bm.getWidth() - startX - ninePatchWidth, bm.getHeight() - startY - ninePatchHeight),
 				canvas = new Canvas(blank);
 			
 			canvas.drawBitmap(part1, 0, 0, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part2, width - bm.getWidth() + stretchWidth, y, false), x, 0, null);
-			canvas.drawBitmap(part3, width - bm.getWidth() + stretchWidth + x, 0, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part4, x, height - bm.getHeight() + stretchHeight, false), 0, y, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part5, width-bm.getWidth() + stretchWidth, height - bm.getHeight() + stretchHeight, false), x, y, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part6, part3.getWidth(), height-bm.getHeight() + stretchHeight, false), width - bm.getWidth() + stretchWidth + x, y, null);
-			canvas.drawBitmap(part7, 0, height - bm.getHeight() + stretchHeight + y, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part8, width-bm.getWidth() + stretchWidth, part7.getHeight(), false), x, height - bm.getHeight() + stretchHeight + y, null);
-			canvas.drawBitmap(part9, width - bm.getWidth() + stretchWidth + x, height-bm.getHeight() + stretchHeight + y, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(part2, width - bm.getWidth() + ninePatchWidth, startY, false), startX, 0, null);
+			canvas.drawBitmap(part3, width - bm.getWidth() + ninePatchWidth + startX, 0, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(part4, startX, height - bm.getHeight() + ninePatchHeight, false), 0, startY, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(part5, width - bm.getWidth() + ninePatchWidth, height - bm.getHeight() + ninePatchHeight, false), startX, startY, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(part6, part3.getWidth(), height - bm.getHeight() + ninePatchHeight, false), width - bm.getWidth() + ninePatchWidth + startX, startY, null);
+			canvas.drawBitmap(part7, 0, height - bm.getHeight() + ninePatchHeight + startY, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(part8, width - bm.getWidth() + ninePatchWidth, part7.getHeight(), false), startX, height - bm.getHeight() + ninePatchHeight + startY, null);
+			canvas.drawBitmap(part9, width - bm.getWidth() + ninePatchWidth + startX, height - bm.getHeight() + ninePatchHeight + startY, null);
 			
 			return new BitmapDrawable(blank);
 		}
 	},
 	
+	drawable : {
+		
+	}
+	
 	Color : {
-		PLAIN : Color.parseColor("#e1e1e1"),
-		IMPORTANT : Color.parseColor("#ffffa1"),
-		WARNING : Color.parseColor("#FF0000"),
-		PROGRESS : Color.parseColor("#ff84ff84"),
-		PROGRSSS_BACKGROUND : Color.parseColor("#ff848184")
+		
+		Palette : function(colors) {
+			  var parse_color = JSON.parse(colors);
+			  
+			  this.getColor = function(name) {
+				  return parse_color[name];
+			  }
+		}
 	},
 	
 	getTexture : function(path) {
@@ -761,11 +269,6 @@ pe.seize.graphics = {
 			height = Math.ceil(uvs[3] * img.getHeight() - y);
 		
 		return BitmapDrawable(Bitmap.createScaledBitmap(Bitmap.createBitmap(img, x, y, width, height), 32, 32, false));
-	},
-	
-	Palette : function(colors) {
-		this.colors = colors;
-		this._colors = {};
 	}
 };
 
@@ -773,7 +276,7 @@ pe.seize.graphics = {
 pe.seize.Utils = {
 	
 	render : function(view, gravity, x, y) {
-		uiThread(function() {
+		Utils.uiThread(function() {
 			var window = new PopupWindow();
 			window.setContentView(view);
 			window.setWidth(-2);
@@ -791,11 +294,17 @@ pe.seize.Utils = {
 			minutes = date.getMinutes(),
 			m, now;
 		
-		if(hours > 12) m = "오후 " + (hours - 12);
-		else m = "오전 " + hours;
+		if(hours > 12) 
+			m = "오후 " + (hours - 12);
+			
+		else 
+			m = "오전 " + hours;
 		
-		if(minutes >= 10) now = minutes;
-		else now = "0" + minutes;
+		if(minutes >= 10) 
+			now = minutes;
+			
+		else 
+			now = "0" + minutes;
 		
 		return year + "년 " + month + "월 " + day + "일 "  + m + ":" + now;
 	},
@@ -805,32 +314,41 @@ pe.seize.Utils = {
 			mobile = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting(),
 			wifi = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
 	
+			
 		if(mobile) 
 			return { STATE : "online", TYPE : "mobile" };
+			
 		else if(wifi) 
 			return { STATE : "online", TYPE : "wifi" };
+			
 		else 
 			return { STATE : "offline", TYPE : "offline" };
 	},
 	
 	download : function(url, path, name) {
-		thread(function() {
+		Utils.Thread(function() {
 			var file = new File(path, name);
-			if(!file.getParentFile().exists()) file.getParentFile().mkdirs();
-			if(!file.exists()) file.createNewFile();
 			
-			var url = new java.net.URL(url);
-			var urlConnect = url.openConnection();
+			if(!file.getParentFile().exists()) 
+				file.getParentFile().mkdirs();
+				
+			if(!file.exists()) 
+				file.createNewFile();
+			
+			
+			var url = new java.net.URL(url), urlConnect = url.openConnection();
 			urlConnect.connect();
-			var BIS = new BufferedInputStream(url.openStream());
-			var FOS = new FileOutputStream(path + name);
-			var buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024);
-			var Total = 1, Count;
+			
+			var BIS = new BufferedInputStream(url.openStream()),
+				FOS = new FileOutputStream(path + name),
+				buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
+				Total = 1, Count;
 			
 			while ((Count = BIS.read(buffer)) != -1) {
 				Total += Count;
 				FOS.write(buffer, 0, Count);
 			}
+			
 			FOS.flush();
 			FOS.close();
 			BIS.close();
@@ -843,16 +361,13 @@ pe.seize.Utils = {
 		CheckUpdate : function() {
 			var that = this;
 			
-			thread(function() {
+			Utils.Thread(function() {
 				var url = new java.net.URL("https://raw.githubusercontent.com/RetroPE/seize_ModPE_Library/master/Version").openStream(),
 					BR = new BufferedReader(new InputStreamReader(url)),
-					vers = BR.readLine();
+					vers = parseInt(BR.readLine());
 				
-				pe.info.VERSION = parseInt(vers);
-				
-				if(!vers.equals(new java.lang.String(MC.info.VERSION))) {
+				if(vers > pe.info.VERSION) 
 					that.UpdateWindow();
-                }
 			});
 		},
 		
@@ -871,17 +386,46 @@ pe.seize.Utils = {
 };
 
 
+pe.seize.net = {
+	Socket : function(ip, port) {
+		var message;
+		
+		this.putData = function(data) {
+			message = data;
+		};
+		
+		this.send = function() {
+			Utils.Thread(function() {
+				try { 
+					var recvIp = (ip == null? "localhost" : ip);
+					client_socket = new Socket(recvIp, port);
+					client_bw = new BufferedWriter(new OutputStreamWriter(client_socket.getOutputStream()));
+					client_bw.write(message);
+					client_bw.flush();
+				} catch(err) {
+					pe.Debug(err);
+				} finally {
+					if(client_socket != null) {
+						try {
+							client_socket.close();
+						} catch(err) {}
+					}
+					if(client_bw != null) client_bw.close();
+					if(client_br != null) client_br.close();
+				}
+			});
+		};
+	},
+	Server : function(port) {
+		
+	}
+};
+
+
 /**
 * @author seizePE(moona0915)
 * @since 2016-2-05
 */
-
-/**
-* @Math객체를 생성합니다.
-* @namespace
-*/
-pe.seize.Math = {};
-
 
 /**
 * @숫자가 소수인지를 판별합니다.
@@ -1093,15 +637,6 @@ pe.seize.Math.nativeSum = function(arr, start, end) {
 };
 
 
-
-
-/**
-* @String객체를 생성합니다.
-* @namespace
-*/
-pe.seize.String = {};
-
-
 /**
 * @코드를 아스키코드로 변환합니다.
 * @param {String} code
@@ -1188,13 +723,6 @@ pe.seize.String.shuffle = function(str) {
 	}
 	return a.join("");
 };
-
-
-/**
-* @Array객체를 생성합니다.
-* @namespace
-*/
-pe.seize.Array = {};
 
 
 /**
@@ -1791,6 +1319,7 @@ const createFont = function(text, color, size, length, drawable, gravity) { //�
 	
 	return layerDrawable;
 };
+
 
 
 function selectLevelHook() {
