@@ -6,39 +6,29 @@
 
 const pe = {
 	
-	getContext : function() {
-		return com.mojang.minecraftpe.MainActivity.currentMainActivity.get();
-	},
+	CONTEXT : com.mojang.minecraftpe.MainActivity.currentMainActivity.get(),
 	
 	ModPE : {},
 	
-	seize : {},
-	
 	android : {},
 	
-	Math : {}, String : {}, Array : {}, Vector2 : {}, Vector3 : {},
-	
-	info : {
-		VERSION : 1,
-		ChangeLog : [],
-		Maker : "seizePE(moona0915)",
-		E_Mail : "moona0915@naver.com"
+	lib : {
+		seize : {},
+		Math : {}, String : {}, Array : {}, Vector2 : {}, Vector3 : {}
 	}
 };
 
 
 const Utils = {
 	
-	Toast : function(text, duration) {
-		pe.getContext().runOnUiThread(new Runnable({
-			run : function(){
-				Toast.makeText(pe.getContext(), text, (duration == null? Toast.LENGTH_SHORT : duration)).show();
-			}
-		}));
+	Toast : (text, duration) => {
+		pe.CONTEXT.runOnUiThread(new Runnable({ run : () => {
+			Toast.makeText(pe.CONTEXT, text, (duration == null? Toast.LENGTH_SHORT : duration)).show();
+		}}));
 	},
 	
-	uiThread : function(func) {
-		pe.getContext().runOnUiThread(new Runnable({ run : function() {
+	uiThread : func => {
+		pe.CONTEXT.runOnUiThread(new Runnable({ run : () => {
 			try { 
 				func(); 
 			} catch(err) { 
@@ -47,8 +37,8 @@ const Utils = {
 		}}));
 	},
 	
-	Thread : function(func) {
-		new Thread(new Runnable({ run : function() {
+	Thread : func => {
+		new Thread(new Runnable({ run : () => {
 			try { 
 				func(); 
 			} catch(err) { 
@@ -57,10 +47,10 @@ const Utils = {
 		}})).start();
 	},
 	
-	Debug : function(err) {
-		pe.getContext().runOnUiThread(new Runnable({ run : function() {
+	Debug : err => {
+		pe.CONTEXT.runOnUiThread(new Runnable({ run : () => {
 			try {
-				var dialog = new android.app.AlertDialog.Builder(pe.getContext());
+				var dialog = new android.app.AlertDialog.Builder(pe.CONTEXT);
 				dialog.setTitle("Error");
 				dialog.setMessage("Error\n\n - " + err.name + "\n - " + (err.lineNumber + 1) + "\n\n" + err.message);
 				dialog.show();
@@ -70,7 +60,112 @@ const Utils = {
 		}}));
 	},
 	
-	getAbsolutePath : function() {
+	render : (view, gravity, x, y) => {
+		Utils.uiThread(() => {
+			var window = new PopupWindow();
+			window.setContentView(view);
+			window.setWidth(-2);
+			window.setHeight(-2);
+			window.showAtLocation(pe.CONTEXT.getWindow().getDecorView(), gravity, x, y);
+		});
+	},
+	
+	getCurrentTime : () => {
+		var date = new Date(),
+			year = date.getFullYear(),
+			month = date.getMonth() + 1,
+			day = date.getDate(),
+			hours = date.getHours(),
+			minutes = date.getMinutes(),
+			m, now;
+		
+		if(hours > 12) 
+			m = "오후 " + (hours - 12);
+			
+		else 
+			m = "오전 " + hours;
+		
+		if(minutes >= 10) 
+			now = minutes;
+			
+		else 
+			now = "0" + minutes;
+		
+		return year + "년 " + month + "월 " + day + "일 "  + m + ":" + now;
+	},
+	
+	getNetworkInfo : () => {
+		var manager = pe.CONTEXT.getSystemService(pe.CONTEXT.CONNECTIVITY_SERVICE),
+			mobile = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting(),
+			wifi = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
+	
+			
+		if(mobile) 
+			return { STATE : "online", TYPE : "mobile" };
+			
+		else if(wifi) 
+			return { STATE : "online", TYPE : "wifi" };
+			
+		else 
+			return { STATE : "offline", TYPE : "offline" };
+	},
+	
+	Download : (url, path, name) => {
+		Utils.Thread(() => {
+			var file = new File(path, name);
+			
+			if(!file.getParentFile().exists()) 
+				file.getParentFile().mkdirs();
+				
+			if(!file.exists()) 
+				file.createNewFile();
+			
+			
+			var url = new java.net.URL(url), urlConnect = url.openConnection();
+			urlConnect.connect();
+			
+			var BIS = new BufferedInputStream(url.openStream()),
+				FOS = new FileOutputStream(path + name),
+				buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
+				Total = 1, Count;
+			
+			while ((Count = BIS.read(buffer)) != -1) {
+				Total += Count;
+				FOS.write(buffer, 0, Count);
+			}
+			
+			FOS.flush();
+			FOS.close();
+			BIS.close();
+			return true;
+		});
+	},
+	
+	UpdateCenter : {
+		
+		checkUpdate : () => {
+			var that = this;
+			
+			Utils.Thread(() => {
+				var url = new java.net.URL("https://raw.githubusercontent.com/RetroPE/seize_ModPE_Library/master/Version").openStream(),
+					BR = new BufferedReader(new InputStreamReader(url)),
+					vers = parseInt(BR.readLine());
+				
+				if(vers > pe.info.VERSION) 
+					that.UpdateWindow();
+			});
+		},
+		
+		getChangeLog : () => {
+			
+		},
+		
+		UpdateWindow : () => {
+			
+		}
+	},
+	
+	getAbsolutePath : () => {
 		return android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
 	}
 }
@@ -95,8 +190,8 @@ var Button = android.widget.Button,
 	LinearLayout = android.widget.LinearLayout,
 	horizontalScrollView = android.widget.HorizontalScrollView,
 	FrameLayout = android.widget.FrameLayout,
-	WIDTH = pe.getContext().getScreenWidth(),
-	HEIGHT = pe.getContext().getScreenHeight(),
+	WIDTH = pe.CONTEXT.getScreenWidth(),
+	HEIGHT = pe.CONTEXT.getScreenHeight(),
 	Bitmap = android.graphics.Bitmap,
 	BitmapFactory = android.graphics.BitmapFactory,
 	BitmapDrawable = android.graphics.drawable.BitmapDrawable,
@@ -139,13 +234,13 @@ var Button = android.widget.Button,
 var client_socket, client_bw;
 
 
-pe.seize.widget = {
+pe.lib.seize.widget = {
 	
-	Button : function() {
+	Button : () => {
 		
 	},
 	
-	ToggleButton : function() {
+	ToggleButton : () => {
 		
 	}
 }
@@ -153,8 +248,8 @@ pe.seize.widget = {
 
 pe.android.widget = {
 
-	Button : function(text, textColor, textSize, width, height, drawable) {
-		var btn = new Button(pe.getContext());
+	Button : (text, textColor, textSize, width, height, drawable) => {
+		var btn = new Button(pe.CONTEXT);
 		btn.setText(text);
 		if(textColor != null) btn.setTextColor(textColor);
 		if(textSize != null) btn.setTextSize(textSize);
@@ -164,8 +259,8 @@ pe.android.widget = {
 		return btn;
 	},
 	
-	TextView : function(text, textColor, textSize, width, height, drawable) {
-		var tv = new TextView(pe.getContext());
+	TextView : (text, textColor, textSize, width, height, drawable) => {
+		var tv = new TextView(pe.CONTEXT);
 		tv.setText(text);
 		if(textColor != null) tv.setTextColor(textColor);
 		if(textSize != null) tv.setTextSize(textSize);
@@ -175,12 +270,12 @@ pe.android.widget = {
 		return tv;
 	},
 	
-	ProgressBar : function(type, progress, max) {
+	ProgressBar : (type, progress, max) => {
 		
 	},
 	
-	LinearLayout : function(orientation, gravity) {
-		var layout = new LinearLayout(pe.getContext());
+	LinearLayout : (orientation, gravity) => {
+		var layout = new LinearLayout(pe.CONTEXT);
 		layout.setOrientation(orientation);
 		layout.setGravity(gravity);
 		
@@ -189,15 +284,15 @@ pe.android.widget = {
 };
 
 
-pe.seize.graphics = {
+pe.lib.seize.graphics = {
 	
 	Bitmap : {
 		
-		cutImage : function(bm, x, y, width, height) {
+		cutImage : (bm, x, y, width, height) => {
 			return android.graphics.Bitmap.createScaledBitmap(android.graphics.Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
-		nienPatch : function(bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) {
+		nienPatch : (bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) => {
 			if(bm.getPixel(0,0) === -9739933 && bm.getWidth() === bm.getHeight())
 				var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565);
 			else
@@ -230,20 +325,16 @@ pe.seize.graphics = {
 	
 	drawable : {
 		
-	}
+	},
 	
 	Color : {
 		
-		Palette : function(colors) {
-			  var parse_color = JSON.parse(colors);
-			  
-			  this.getColor = function(name) {
-				  return parse_color[name];
-			  }
+		Palette : colors => {
+			
 		}
 	},
 	
-	getTexture : function(path) {
+	getTexture : path => {
 		var texture = ModPE.openInputStreamFromTexturePack("images/" + path), type = path.split(".");
 		
 		if(type[type.length] === "tga") 
@@ -252,9 +343,9 @@ pe.seize.graphics = {
 		else return BitmapFactory.decodeStream(texture);
 	},
 	
-	ItemImageLoader : function(name, data) {
+	ItemImageLoader : (name, data) => {
 		var meta = eval("" + new java.lang.String(ModPE.getBytesFromTexturePack("images/items.meta"))+""),
-		meta_map = meta.map(function(i) {
+		meta_map = meta.map(i => {
 			return i.name;
 		});
 		
@@ -273,155 +364,6 @@ pe.seize.graphics = {
 };
 
 
-pe.seize.Utils = {
-	
-	render : function(view, gravity, x, y) {
-		Utils.uiThread(function() {
-			var window = new PopupWindow();
-			window.setContentView(view);
-			window.setWidth(-2);
-			window.setHeight(-2);
-			window.showAtLocation(pe.getContext().getWindow().getDecorView(), gravity, x, y);
-		});
-	},
-	
-	getTime : function() {
-		var date = new Date(),
-			year = date.getFullYear(),
-			month = date.getMonth() + 1,
-			day = date.getDate(),
-			hours = date.getHours(),
-			minutes = date.getMinutes(),
-			m, now;
-		
-		if(hours > 12) 
-			m = "오후 " + (hours - 12);
-			
-		else 
-			m = "오전 " + hours;
-		
-		if(minutes >= 10) 
-			now = minutes;
-			
-		else 
-			now = "0" + minutes;
-		
-		return year + "년 " + month + "월 " + day + "일 "  + m + ":" + now;
-	},
-	
-	getNetworkInfo : function() {
-		var manager = pe.getContext().getSystemService(pe.getContext().CONNECTIVITY_SERVICE),
-			mobile = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting(),
-			wifi = manager.getNetworkInfo(android.net.ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
-	
-			
-		if(mobile) 
-			return { STATE : "online", TYPE : "mobile" };
-			
-		else if(wifi) 
-			return { STATE : "online", TYPE : "wifi" };
-			
-		else 
-			return { STATE : "offline", TYPE : "offline" };
-	},
-	
-	download : function(url, path, name) {
-		Utils.Thread(function() {
-			var file = new File(path, name);
-			
-			if(!file.getParentFile().exists()) 
-				file.getParentFile().mkdirs();
-				
-			if(!file.exists()) 
-				file.createNewFile();
-			
-			
-			var url = new java.net.URL(url), urlConnect = url.openConnection();
-			urlConnect.connect();
-			
-			var BIS = new BufferedInputStream(url.openStream()),
-				FOS = new FileOutputStream(path + name),
-				buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
-				Total = 1, Count;
-			
-			while ((Count = BIS.read(buffer)) != -1) {
-				Total += Count;
-				FOS.write(buffer, 0, Count);
-			}
-			
-			FOS.flush();
-			FOS.close();
-			BIS.close();
-			return true;
-		});
-	},
-	
-	UpdateCenter : {
-		
-		CheckUpdate : function() {
-			var that = this;
-			
-			Utils.Thread(function() {
-				var url = new java.net.URL("https://raw.githubusercontent.com/RetroPE/seize_ModPE_Library/master/Version").openStream(),
-					BR = new BufferedReader(new InputStreamReader(url)),
-					vers = parseInt(BR.readLine());
-				
-				if(vers > pe.info.VERSION) 
-					that.UpdateWindow();
-			});
-		},
-		
-		getLastVersion : function() {
-			
-		},
-		
-		getChangeLog : function() {
-			
-		},
-		
-		UpdateWindow : function() {
-			
-		}
-	}
-};
-
-
-pe.seize.net = {
-	Socket : function(ip, port) {
-		var message;
-		
-		this.putData = function(data) {
-			message = data;
-		};
-		
-		this.send = function() {
-			Utils.Thread(function() {
-				try { 
-					var recvIp = (ip == null? "localhost" : ip);
-					client_socket = new Socket(recvIp, port);
-					client_bw = new BufferedWriter(new OutputStreamWriter(client_socket.getOutputStream()));
-					client_bw.write(message);
-					client_bw.flush();
-				} catch(err) {
-					pe.Debug(err);
-				} finally {
-					if(client_socket != null) {
-						try {
-							client_socket.close();
-						} catch(err) {}
-					}
-					if(client_bw != null) client_bw.close();
-					if(client_br != null) client_br.close();
-				}
-			});
-		};
-	},
-	Server : function(port) {
-		
-	}
-};
-
-
 /**
 * @author seizePE(moona0915)
 * @since 2016-2-05
@@ -432,7 +374,7 @@ pe.seize.net = {
 * @param {Number} number
 * @return {Boolean}
 */
-pe.seize.Math.isPrime = function(number) {
+pe.lib.seize.Math.isPrime = number => {
 	if(number % 2 === 0 && number !== 2) 
 		return false;
 	
@@ -453,7 +395,7 @@ pe.seize.Math.isPrime = function(number) {
 * @param {Number} number
 * @return {Array}
 */
-pe.seize.Math.Factorization = function(number) {
+pe.lib.seize.Math.Factorization = number => {
 	for(var i = 2, tmp = number, nums = []; i * i <= number; i += 2) {
 		while(!(tmp % i)) {
 			tmp /= i; 
@@ -475,7 +417,7 @@ pe.seize.Math.Factorization = function(number) {
 * @param {Number} number
 * @return {Array}
 */
-pe.seize.Math.divisor = function(number) {
+pe.lib.seize.Math.divisor = number => {
 	var tmp = 1, nums = new Array();
 	
 	nums.push(1);
@@ -496,7 +438,7 @@ pe.seize.Math.divisor = function(number) {
 * @param {Number} b
 * @return {Number}
 */
-pe.seize.Math.max = function(a, b) {
+pe.lib.seize.Math.max = (a, b) => {
 	return a === b? a : (a > b? a : b);
 };
 
@@ -507,7 +449,7 @@ pe.seize.Math.max = function(a, b) {
 * @param {Number} b
 * @return {Number}
 */
-pe.seize.Math.min = function(a, b) {
+pe.lib.seize.Math.min = (a, b) => {
 	return a === b? a : (a < b? a : b);
 };
 
@@ -517,7 +459,7 @@ pe.seize.Math.min = function(a, b) {
 * @param {Number} number
 * @return {Number}
 */
-pe.seize.Math.factorial = function(number) {
+pe.lib.seize.Math.factorial = number => {
 	var result = 1;
 	while(--number) {
 		result *= number + 1;
@@ -532,7 +474,7 @@ pe.seize.Math.factorial = function(number) {
 * @param {Number} number
 * @return {Number}
 */
-pe.seize.Math.toHexNumber = function(number) {
+pe.lib.seize.Math.toHexNumber = number => {
 	return parseInt(number.toString(16));
 };
 
@@ -542,7 +484,7 @@ pe.seize.Math.toHexNumber = function(number) {
 * @param {Number} 
 * @return {Number} 
 */
-pe.seize.Math.hypot = function() {
+pe.lib.seize.Math.hypot = () => {
 	for(var i = 0, h = 0; i < arguments.length; i++) h += arguments[i] * arguments[i];
 	
 	return Math.sqrt(h);
@@ -555,7 +497,7 @@ pe.seize.Math.hypot = function() {
 * @param {Number} num2
 * @return {Number}
 */
-pe.seize.Math.getGCD = function(num1, num2) {
+pe.lib.seize.Math.getGCD = (num1, num2) => {
 	if(num1 < num2) 
 		return this.getGCD(num2, num1); 
 	
@@ -572,7 +514,7 @@ pe.seize.Math.getGCD = function(num1, num2) {
 * @param {Number} num2
 * @return {Number}
 */
-pe.seize.Math.getLCM = function(num1, num2) {
+pe.lib.seize.Math.getLCM = (num1, num2) => {
 	return (num1 * num2) / this.getGCD(num1, num2); 
 };
 
@@ -584,7 +526,7 @@ pe.seize.Math.getLCM = function(num1, num2) {
 * @param {Boolean} is prime
 * @return {Number}
 */
-pe.seize.Math.random = function(start, end, prime) {
+pe.lib.seize.Math.random = (start, end, prime) => {
 	var range = end - start, result;
 	
 	prime = (prime == null? false : prime);
@@ -606,7 +548,7 @@ pe.seize.Math.random = function(start, end, prime) {
 * @param {Number} base
 * @return {Number}
 */
-pe.seize.Math.log = function(number, base) {
+pe.lib.seize.Math.log = (number, base) => {
 	return Math.log(number) / Math.log((base == null? 10 : base));
 };
 
@@ -616,7 +558,7 @@ pe.seize.Math.log = function(number, base) {
 * @param {Number} n
 * @return {Number}
 */
-pe.seize.Math.fibonacci = function(n) {
+pe.lib.seize.Math.fibonacci = n => {
 	if(n <= 2) return 1;
 	for(var i = 2, fibo = [1, 1]; i <= n; i++) fibo[i] = fibo[i-1] + fibo[i-2];
 	
@@ -630,7 +572,7 @@ pe.seize.Math.fibonacci = function(n) {
 * @param {Number} start
 * @param {Number} end
 */
-pe.seize.Math.nativeSum = function(arr, start, end) {
+pe.lib.seize.Math.nativeSum = (arr, start, end) => {
 	for(var i = start, temp = 0; end >= i; i += 1) temp += arr[i];
 	
 	return temp;
@@ -642,7 +584,7 @@ pe.seize.Math.nativeSum = function(arr, start, end) {
 * @param {String} code
 * @return {String}
 */
-pe.seize.String.str2ascii = function(code) {
+pe.lib.seize.String.str2ascii = code => {
 	for(var i = 0, sp = code.split(""), eCode = ""; i < sp.length; i ++) eCode += (i == sp.length - 1? sp[i].charCodeAt(0) : sp[i].charCodeAt(0) + " ");
 	
 	return eCode;
@@ -654,7 +596,7 @@ pe.seize.String.str2ascii = function(code) {
 * @param {String} ascii code
 * @return {String}
 */
-pe.seize.String.ascii2str = function(code) {
+pe.lib.seize.String.ascii2str = code => {
 	for(var i = 0, rCode = "", sp = code.split(" "); i < sp.length; i ++) rCode += String.fromCharCode(sp[i]);
 	
 	return rCode;
@@ -666,7 +608,7 @@ pe.seize.String.ascii2str = function(code) {
 * @param {String} str
 * @return {Boolean}
 */
-pe.seize.String.isEnglish = function(str) {
+pe.lib.seize.String.isEnglish = str => {
 	return /^[A-z]+$/.test(str);
 };
 
@@ -676,10 +618,10 @@ pe.seize.String.isEnglish = function(str) {
 * @param {String} str
 * @return {String}
 */
-pe.seize.String.toHexString = function(str) {
+pe.lib.seize.String.toHexString = str => {
 	var string = "";
 	
-	str.split("").forEach(function(element) {
+	str.split("").forEach(element => {
 		string += "\\x" + element.charCodeAt(0).toString(16).toUpperCase();
 	});
 	
@@ -694,7 +636,7 @@ pe.seize.String.toHexString = function(str) {
 * @param {String} _str
 * @return {String}
 */
-pe.seize.String.replaceAll = function(str, target, _str) {
+pe.lib.seize.String.replaceAll = (str, target, _str) => {
 	return str.split(target).join(_str);
 };
 
@@ -704,7 +646,7 @@ pe.seize.String.replaceAll = function(str, target, _str) {
 * @param {String} str
 * @return {String}
 */
-pe.seize.String.reverse = function(str) {
+pe.lib.seize.String.reverse = str => {
 	for(var i = str.length - 1, rstr = ""; i >= 0; i--) rstr += str[i];
 	return rstr;
 };
@@ -715,7 +657,7 @@ pe.seize.String.reverse = function(str) {
 * @param {String} str
 * @return {String}
 */
-pe.seize.String.shuffle = function(str) {
+pe.lib.seize.String.shuffle = str => {
 	for(var _str = str.split(""), n = _str.length, i = n - 1; i > 0; i--) {
 		var index = Math.floor(Math.random() * (i + 1)), tmp = _str[i];
 		
@@ -730,7 +672,7 @@ pe.seize.String.shuffle = function(str) {
 * @param {Array} arr
 * @return {Number}
 */
-pe.seize.Array.max = function(arr) {
+pe.lib.seize.Array.max = arr => {
 	return Math.max.apply(null, arr);
 };
 
@@ -740,7 +682,7 @@ pe.seize.Array.max = function(arr) {
 * @param {Array} arr
 * @return {Number}
 */
-pe.seize.Array.min = function(arr) {
+pe.lib.seize.Array.min = arr => {
 	return Math.min.apply(null, arr);
 };
 
@@ -750,8 +692,8 @@ pe.seize.Array.min = function(arr) {
 * @param {Array} arr
 * @return {Number}
 */
-pe.seize.Array.average = function(arr) {
-	return (arr.reduce(function(a, b) {
+pe.lib.seize.Array.average = arr => {
+	return (arr.reduce((a, b) => {
 		return a + b;
 	}) / arr.length);
 };
@@ -763,7 +705,7 @@ pe.seize.Array.average = function(arr) {
 * @param {Array} b
 * @return {Boolean}
 */
-pe.seize.Array.equals = function(a, b) {
+pe.lib.seize.Array.equals = (a, b) => {
 	var index = -1, equals = true;
 	
 	if(a.length !== b.length) 
@@ -783,7 +725,7 @@ pe.seize.Array.equals = function(a, b) {
 * @param {Array} arr
 * @return {Array}
 */
-pe.seize.Array.sort = function(arr) {
+pe.lib.seize.Array.sort = arr => {
 	if(arr.length === 0) 
 		return [];
 	
@@ -803,23 +745,23 @@ pe.seize.Array.sort = function(arr) {
 * @param {Number} x
 * @param {Number} y
 */
-pe.seize.Vector2 = function(x, y) {
+pe.lib.seize.Vector2 = x, y) {
 	this.x = Math.floor(x);
 	this.y = Math.floor(y);
 };
 
 
-pe.seize.Vector2.prototype = {};
+pe.lib.seize.Vector2.prototype = {};
 
 
 /**
 * @두 좌표간 거리를 구합니다.
-* @param {Number|pe.seize.Vector2} x
+* @param {Number|pe.lib.seize.Vector2} x
 * @param {Number} y
 * @return {Number}
 */
-pe.seize.Vector2.prototype.getDistance = function(x, y) {
-	if(x instanceof pe.seize.Vector2) 
+pe.lib.seize.Vector2.prototype.getDistance = (x, y) => {
+	if(x instanceof pe.lib.seize.Vector2) 
 		return Math.sqrt(Math.pow((this.x - x.x), 2) + Math.pow((this.y - x.y), 2));
 	
 	return Math.sqrt(Math.pow((this.x - x), 2) + Math.pow((this.y - y), 2));
@@ -828,29 +770,29 @@ pe.seize.Vector2.prototype.getDistance = function(x, y) {
 
 /**
 * @지정된 좌표에 좌표를 더합니다.
-* @param {Number|pe.seize.Vector2} x
+* @param {Number|pe.lib.seize.Vector2} x
 * @param {Number} y
-* @return {pe.seize.Vector2}
+* @return {pe.lib.seize.Vector2}
 */
-pe.seize.Vector2.prototype.add = function(x, y) {
-	if(x instanceof pe.seize.Vector2) 
-		return new pe.seize.Vector2(this.x + x.x, this.y + x.y);
+pe.lib.seize.Vector2.prototype.add = (x, y) => {
+	if(x instanceof pe.lib.seize.Vector2) 
+		return new pe.lib.seize.Vector2(this.x + x.x, this.y + x.y);
 	
-	return new pe.seize.Vector2(this.x + x, this.y + y);
+	return new pe.lib.seize.Vector2(this.x + x, this.y + y);
 };
 
 
 /**
 * @지정된 좌표에서 좌표를 뺍니다.
-* @param {Number|pe.seize.Vector2} x
+* @param {Number|pe.lib.seize.Vector2} x
 * @param {Number} y
-* @return {pe.seize.Vector2}
+* @return {pe.lib.seize.Vector2}
 */
-pe.seize.Vector2.prototype.subtract = function(x, y) {
-	if(x instanceof pe.seize.Vector2) 
-		return new pe.seize.Vector2(this.x - x.x, this.y - x.y);
+pe.lib.seize.Vector2.prototype.subtract = (x, y) => {
+	if(x instanceof pe.lib.seize.Vector2) 
+		return new pe.lib.seize.Vector2(this.x - x.x, this.y - x.y);
 	
-	return new pe.seize.Vector2(this.x - x, this.y - y);
+	return new pe.lib.seize.Vector2(this.x - x, this.y - y);
 };
 
 
@@ -859,22 +801,22 @@ pe.seize.Vector2.prototype.subtract = function(x, y) {
 * @param {Number} x
 * @param {Number} y
 */
-pe.seize.Vector2.prototype.set = function(x, y) {
-	if(x instanceof pe.seize.Vector2) 
-		return new pe.seize.Vector2(x.x, x.y);
+pe.lib.seize.Vector2.prototype.set = (x, y) => {
+	if(x instanceof pe.lib.seize.Vector2) 
+		return new pe.lib.seize.Vector2(x.x, x.y);
 	
-	return new pe.seize.Vector2(Math.floor(x), Math.floor(y), Math.floor(z));
+	return new pe.lib.seize.Vector2(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
 
 /**
 * @좌표 혹은 벡터가 같은지 비교합니다.
-* @param {Number|pe.seize.Vector2} x
+* @param {Number|pe.lib.seize.Vector2} x
 * @param {Number} y
 * @return {Boolean}
 */
-pe.seize.Vector2.prototype.equals = function(x, y) {
-	if(x instanceof pe.seize.Vector2) 
+pe.lib.seize.Vector2.prototype.equals = (x, y) => {
+	if(x instanceof pe.lib.seize.Vector2) 
 		return this.x === x.x && this.y === x.y;
 	
 	return this.x === Math.floor(x) && this.y === Math.floor(y);
@@ -885,7 +827,7 @@ pe.seize.Vector2.prototype.equals = function(x, y) {
 * @좌표를 배열로 변환합니다.
 * @return {Array}
 */
-pe.seize.Vector2.prototype.toArray = function() {
+pe.lib.seize.Vector2.prototype.toArray = () => {
 	return [this.x, this.y];
 };
 
@@ -894,7 +836,7 @@ pe.seize.Vector2.prototype.toArray = function() {
 * @좌표를 문자열로 변환합니다.
 * @return {String}
 */
-pe.seize.Vector2.prototype.toString = function() {
+pe.lib.seize.Vector2.prototype.toString = () => {
 	return "[ " + this.toArray().join(", ") + " ]";
 };
 
@@ -903,7 +845,7 @@ pe.seize.Vector2.prototype.toString = function() {
 * @2차원 벡터의 x값을 구합니다.
 * @return {Number}
 */
-pe.seize.Vector2.prototype.getX = function() {
+pe.lib.seize.Vector2.prototype.getX = () => {
 	return this.x;
 };
 
@@ -912,19 +854,19 @@ pe.seize.Vector2.prototype.getX = function() {
 * @2차원 벡터의 y값을 구합니다.
 * @return {Number}
 */
-pe.seize.Vector2.prototype.getY = function() {
+pe.lib.seize.Vector2.prototype.getY = () => {
 	return this.y;
 };
 
 
 /**
 * @3차원 벡터함수.
-* @param {Number|pe.seize.Entity} x
+* @param {Number|pe.lib.seize.Entity} x
 * @param {Number} y
 * @param {Number} z
 */
-pe.seize.Vector3 = function(x, y, z) {
-	if(x instanceof pe.seize.Entity) {
+pe.lib.seize.Vector3 = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Entity) {
 		this.x = Math.floor(Entity.getX(x.ent));
 		this.y = Math.floor(Entity.getY(x.ent));
 		this.z = Math.floor(Entity.getZ(x.ent));
@@ -937,62 +879,62 @@ pe.seize.Vector3 = function(x, y, z) {
 };
 
 
-pe.seize.Vector3.prototype = {};
+pe.lib.seize.Vector3.prototype = {};
 
 
 /**
 * @지정된 좌표를 변경합니다.
-* @param {Number|pe.seize.Vector3} x
+* @param {Number|pe.lib.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 */
-pe.seize.Vector3.prototype.set = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) 
-		return new pe.seize.Vector3(x.x, x.y, x.z);
+pe.lib.seize.Vector3.prototype.set = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Vector3) 
+		return new pe.lib.seize.Vector3(x.x, x.y, x.z);
 	
-	return new pe.seize.Vector3(Math.floor(x), Math.floor(y), Math.floor(z));
+	return new pe.lib.seize.Vector3(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
 
 /**
 * @지정된 좌표에 더합니다.
-* @param {Number|pe.seize.Vector3} x
+* @param {Number|pe.lib.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
-* @return {pe.seize.Vector3}
+* @return {pe.lib.seize.Vector3}
 */
-pe.seize.Vector3.prototype.add = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) 
-		return new pe.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
+pe.lib.seize.Vector3.prototype.add = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Vector3) 
+		return new pe.lib.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
 	
-	return new pe.seize.Vector3(this.x + Math.floor(x), this.y + Math.floor(y), this.z + Math.floor(z));
+	return new pe.lib.seize.Vector3(this.x + Math.floor(x), this.y + Math.floor(y), this.z + Math.floor(z));
 };
 
 
 /**
 * @지정된 좌표에서 뺍니다.
-* @param {Number|pe.seize.Vector3} x
+* @param {Number|pe.lib.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
-* @return {pe.seize.Vector3}
+* @return {pe.lib.seize.Vector3}
 */
-pe.seize.Vector3.prototype.subtract= function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) 
-		return new pe.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
+pe.lib.seize.Vector3.prototype.subtract = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Vector3) 
+		return new pe.lib.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
 	
-	return new pe.seize.Vector3(this.x - Math.floor(x), this.y - Math.floor(y), this.z - Math.floor(z));
+	return new pe.lib.seize.Vector3(this.x - Math.floor(x), this.y - Math.floor(y), this.z - Math.floor(z));
 };
 
 
 /**
 * @두 좌표 혹은 벡터가 같은지 확인합니다.
-* @param {Number|pe.seize.Vector3} x
+* @param {Number|pe.lib.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 * @return {Boolean}
 */
-pe.seize.Vector3.prototype.equals = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) 
+pe.lib.seize.Vector3.prototype.equals = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Vector3) 
 		return this.x === x.x && this.y === x.y && this.z === x.z;
 	
 	return this.x === Math.floor(x) && this.y === Math.floor(y) && this.z === Math.floor(z);
@@ -1003,7 +945,7 @@ pe.seize.Vector3.prototype.equals = function(x, y, z) {
 * @좌표를 배열로 변환합니다.
 * @return {Array}
 */
-pe.seize.Vector3.prototype.toArray = function() {
+pe.lib.seize.Vector3.prototype.toArray = () => {
 	return [this.x, this.y, this.z];
 };
 
@@ -1012,20 +954,20 @@ pe.seize.Vector3.prototype.toArray = function() {
 * @좌표를 문자열로 변환합니다.
 * @return {String}
 */
-pe.seize.Vector3.prototype.toString = function() {
+pe.lib.seize.Vector3.prototype.toString = () => {
 	return "[ " + this.toArray().join(", ") + " ]";
 };
 
 
 /**
 * @두 좌표간 거리를 구합니다.
-* @param {Number|pe.seize.Vector3} x
+* @param {Number|pe.lib.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 * @return {Number}
 */
-pe.seize.Vector3.prototype.getDistance = function(x, y, z) {
-	if(x instanceof pe.seize.Vector3) 
+pe.lib.seize.Vector3.prototype.getDistance = (x, y, z) => {
+	if(x instanceof pe.lib.seize.Vector3) 
 		return Math.sqrt(Math.pow(this.x - x.x, 2) + Math.pow(this.y - x.y, 2) + Math.pow(this.z - x.z, 2));
 	
 	return Math.sqrt(Math.pow(this.x - Math.floor(x), 2) + Math.pow(this.y - Math.floor(y), 2) + Math.low(this.z - Math.floor(z), 2));
@@ -1036,7 +978,7 @@ pe.seize.Vector3.prototype.getDistance = function(x, y, z) {
 * @3차원 벡터의 x값을 구합니다.
 * @return {Number}
 */
-pe.seize.Vector3.prototype.getX = function() {
+pe.lib.seize.Vector3.prototype.getX = () => {
 	return this.x;
 };
 
@@ -1045,7 +987,7 @@ pe.seize.Vector3.prototype.getX = function() {
 * @3차원 벡터의 y값을 구합니다.
 * @return {Number}
 */
-pe.seize.Vector3.prototype.getY = function() {
+pe.lib.seize.Vector3.prototype.getY = () => {
 	return this.y;
 };
 
@@ -1054,7 +996,7 @@ pe.seize.Vector3.prototype.getY = function() {
 * @3차원 벡터의 z값을 구합니다.
 * @return {Number}
 */
-pe.seize.Vector3.prototype.getZ = function() {
+pe.lib.seize.Vector3.prototype.getZ = () => {
 	return this.z;
 };
 
@@ -1063,8 +1005,8 @@ pe.seize.Vector3.prototype.getZ = function() {
 * @Entity객체를 생성합니다.
 * @namespace
 */
-pe.seize.Entity = function(ent) {
-	if(ent instanceof pe.seize.Entity) 
+pe.lib.seize.Entity = ent => {
+	if(ent instanceof pe.lib.seize.Entity) 
 		this.ent = ent.ent;
 		
 	else if(typeof ent === "number") 
@@ -1075,7 +1017,7 @@ pe.seize.Entity = function(ent) {
 /**
 * @엔티티 타입목록 입니다.
 */
-pe.seize.Entity.EntityTypes = {
+pe.lib.seize.Entity.EntityTypes = {
 	HUMAN : 0,
 	PLAYER : 0,
 	CHICKEN : 10,
@@ -1121,14 +1063,14 @@ pe.seize.Entity.EntityTypes = {
 * @모든 엔티티를 구합니다.
 * @return {Array}
 */
-pe.seize.Entity.getAll = function() {
-	return Entity.getAllMob().filter(function(ent) {
+pe.lib.seize.Entity.getAll = () => {
+	return Entity.getAllMob().filter(ent => {
 		return Entity.getEntityTypeId(ent) > 0 && Entity.getEntityTypeId(ent) < 61 && ent != null;
 	});
 };
 
 
-pe.seize.Entity.prototype = {};
+pe.lib.seize.Entity.prototype = {};
 
 
 /**
@@ -1137,17 +1079,17 @@ pe.seize.Entity.prototype = {};
 * @param {Number} range
 * @return {Array}
 */
-pe.seize.Entity.prototype.getNearEnity = function(range) {
+pe.lib.seize.Entity.prototype.getNearEnity = range => {
 	var vec;
 	
-	if(ent instanceof pe.seize.Entity) 
-		vec = new pe.seize.Vector3(e);
+	if(ent instanceof pe.lib.seize.Entity) 
+		vec = new pe.lib.seize.Vector3(e);
 		
 	else if(typeof ent === "number") 
-		vec = new pe.seize.Vector3(new pe.seize.Entity(e));
+		vec = new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e));
 	
-	return this.getAll().filter(function(e) {
-		var vec2 = new pe.seize.Vector3(new pe.seize.Entity(e));
+	return this.getAll().filter(e => {
+		var vec2 = new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e));
 		return vec.getDistance(vec2) <= range;
 	});
 };
@@ -1155,12 +1097,12 @@ pe.seize.Entity.prototype.getNearEnity = function(range) {
 
 /**
 * @다른 엔티티와의 거리를 구합니다.
-* @param {EntityType|pe.seize.Entity} e
+* @param {EntityType|pe.lib.seize.Entity} e
 * @return {Number}
 */
-pe.seize.Entity.prototype.getDistance = function(e) {
-	if(e instanceof pe.seize.Entity) 
-		return new pe.seize.Vector3(new pe.seize.Entity(this.ent)).getDistance(new pe.seize.Vector3(new pe.seize.Entity(e)));
+pe.lib.seize.Entity.prototype.getDistance = e => {
+	if(e instanceof pe.lib.seize.Entity) 
+		return new pe.lib.seize.Vector3(new pe.lib.seize.Entity(this.ent)).getDistance(new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e)));
 		
 	return Math.sqrt(Math.pow(Entity.getX(this.ent) - Entity.getX(e), 2) + Math.pow(Entity.getY(this.ent) - Entity.getY(e), 2) + Math.pow(Entity.getZ(this.ent) - Entity.getZ(e), 2));
 };
@@ -1171,10 +1113,10 @@ pe.seize.Entity.prototype.getDistance = function(e) {
 * @param {Number} range
 * @return {Array}
 */
-pe.seize.Entity.prototype.sortByDistance = function(range) {
+pe.lib.seize.Entity.prototype.sortByDistance = range => {
 	var arr = this.getNearEnity(range), that = this;
 	
-	arr.sort(function(a, b) {
+	arr.sort((a, b) => {
 		return that.getDistance(a) - that.getDistance(b);
 	});
 	
@@ -1186,13 +1128,13 @@ pe.seize.Entity.prototype.sortByDistance = function(range) {
 * @엔티티에게 대미지를 줍니다
 * @param {Number} amount
 */
-pe.seize.Entity.prototype.damage = function(amount) {
+pe.lib.seize.Entity.prototype.damage = amount => {
 	var hp = Entity.getHealth(this.ent);
 	Entity.setHealth(this.ent, hp - amount);
 };
 
 
-pe.seize.Entity.prototype.setHealth = function(value) {
+pe.lib.seize.Entity.prototype.setHealth = value => {
 	Entity.setHealth(this.ent, value);
 };
 
@@ -1203,7 +1145,7 @@ pe.seize.Entity.prototype.setHealth = function(value) {
 * @param {Number} y
 * @param {Number} z
 */
-pe.seize.Entity.prototype.setVel = function(x, y, z) {
+pe.lib.seize.Entity.prototype.setVel = (x, y, z) => {
 	if(x != null) Entity.setVelX(this.ent, x);
 	if(y != null) Entity.setVelY(this.ent, y);
 	if(z != null) Entity.setVelZ(this.ent, z);
@@ -1224,12 +1166,12 @@ pe.seize.Entity.prototype.setVel = function(x, y, z) {
 /*
 * 속도 개선 및 이스케이프 시퀀스 인식 추가하기
 */
-const createFont = function(text, color, size, length, drawable, gravity) { //이스케이프 시퀀스 인식 업데이트 하기.
-	function isDefault(str) { 
+const createFont = (text, color, size, length, drawable, gravity) => { //이스케이프 시퀀스 인식 업데이트 하기.
+	var isDefault = str => { 
 		return /^[A-Za-z0-9"'&\+\-!\?<>~%():.]+$/.test(str);
 	}
 	
-	function getAscii(str) { 
+	var getAscii = str => { 
 		return str.charCodeAt(0);
 	}
 	
@@ -1254,7 +1196,7 @@ const createFont = function(text, color, size, length, drawable, gravity) { //�
 	paint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY));
 	_paint.setColorFilter(new PorterDuffColorFilter(Color.rgb(58, 61, 58), PorterDuff.Mode.MULTIPLY));
 		
-	text.split("").forEach(function(elements) {
+	text.split("").forEach(elements => {
 		if(elements != " ") {
 			var ascii = getAscii(elements),
 				def = isDefault(elements),
@@ -1322,7 +1264,7 @@ const createFont = function(text, color, size, length, drawable, gravity) { //�
 
 
 
-function selectLevelHook() {
+var selectLevelHook = () => {
 	var scripts = net.zhuoweizhang.mcpelauncher.ScriptManager.scripts;
 	for(var i = 0; i<scripts.size(); i++) {
 		var script = scripts.get(i),
@@ -1330,7 +1272,10 @@ function selectLevelHook() {
 			SO = org.mozilla.javascript.ScriptableObject;
 			
 		if(SO.hasProperty(scope, "pe")) continue;
+		if(SO.hasProperty(scope, "Utils")) continue;
+		
 		SO.putProperty(scope, "pe", pe);
+		SO.putProperty(scope, "Utils", Utils);
 	}
 }
 
