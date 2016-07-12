@@ -14,7 +14,7 @@ const pe = {
 	
 	lib : {
 		seize : {},
-		Math : {}, String : {}, Array : {}, Vector2 : {}, Vector3 : {}
+		Math : {}, Array : {}, Vector2 : {}, Vector3 : {}
 	}
 };
 
@@ -292,13 +292,9 @@ pe.lib.seize.graphics = {
 			return android.graphics.Bitmap.createScaledBitmap(android.graphics.Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
-		nienPatch : (bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) => {
-			if(bm.getPixel(0,0) === -9739933 && bm.getWidth() === bm.getHeight())
-				var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565);
-			else
-				var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
-			
-			var part1 = Bitmap.createBitmap(bm, 0, 0, startX, startY),
+		nienPatch : (bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) => { //by affogatoman
+			var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888),
+				part1 = Bitmap.createBitmap(bm, 0, 0, startX, startY),
 				part2 = Bitmap.createBitmap(bm, startX, 0, ninePatchWidth, startY),
 				part3 = Bitmap.createBitmap(bm, startX + ninePatchWidth, 0, bm.getWidth() - startX - ninePatchWidth, startY),
 				part4 = Bitmap.createBitmap(bm, 0, startY, startX, ninePatchHeight),
@@ -579,91 +575,87 @@ pe.lib.seize.Math.nativeSum = (arr, start, end) => {
 };
 
 
-/**
-* @코드를 아스키코드로 변환합니다.
-* @param {String} code
-* @return {String}
-*/
-pe.lib.seize.String.str2ascii = code => {
-	for(var i = 0, sp = code.split(""), eCode = ""; i < sp.length; i ++) eCode += (i == sp.length - 1? sp[i].charCodeAt(0) : sp[i].charCodeAt(0) + " ");
-	
-	return eCode;
-};
+pe.lib.seize.String = str => this.str = str;
 
 
-/**
-* @아스키코드를 문자열로 변환합니다.
-* @param {String} ascii code
-* @return {String}
-*/
-pe.lib.seize.String.ascii2str = code => {
-	for(var i = 0, rCode = "", sp = code.split(" "); i < sp.length; i ++) rCode += String.fromCharCode(sp[i]);
-	
-	return rCode;
-};
-
-
-/**
-* @문자열이 영어인지 판별합니다.
-* @param {String} str
-* @return {Boolean}
-*/
-pe.lib.seize.String.isEnglish = str => {
-	return /^[A-z]+$/.test(str);
-};
-
-
-/**
-* @문자를 16진수로 변환합니다.
-* @param {String} str
-* @return {String}
-*/
-pe.lib.seize.String.toHexString = str => {
-	var string = "";
-	
-	str.split("").forEach(element => {
-		string += "\\x" + element.charCodeAt(0).toString(16).toUpperCase();
-	});
-	
-	return string;
-};
-
-
-/**
-* @문자열내의 모든 특정 문자열을 바꿉니다.
-* @param {String} str
-* @param {String} target
-* @param {String} _str
-* @return {String}
-*/
-pe.lib.seize.String.replaceAll = (str, target, _str) => {
-	return str.split(target).join(_str);
-};
-
-
-/**
-* @문자열을 뒤집습니다.
-* @param {String} str
-* @return {String}
-*/
-pe.lib.seize.String.reverse = str => {
-	for(var i = str.length - 1, rstr = ""; i >= 0; i--) rstr += str[i];
-	return rstr;
-};
-
-
-/**
-* @문자열을 섞습니다.
-* @param {String} str
-* @return {String}
-*/
-pe.lib.seize.String.shuffle = str => {
-	for(var _str = str.split(""), n = _str.length, i = n - 1; i > 0; i--) {
-		var index = Math.floor(Math.random() * (i + 1)), tmp = _str[i];
+pe.lib.seize.String.prototype = {
+	toAscii : () => {
+		for(var i = 0, sp = this.str.split(""), eCode = ""; i < this.str.length; i ++) eCode += (i == sp.length - 1? sp[i].charCodeAt(0) : sp[i].charCodeAt(0) + " ");
 		
-		_str[i] = _str[index], _str[index] = tmp;
+		return eCode;
+	},
+	
+	toString : () => {
+		for(var i = 0, rCode = "", sp = this.str.split(" "); i < sp.length; i ++) rCode += String.fromCharCode(sp[i]);
+		
+		return rCode;
+	},
+	
+	isEnglish : () => return /^[A-z]+$/.test(this.str);
+	
+	toHexString : () => {
+		var string = "";
+		
+		this.str.split("").forEach(element => {
+			string += "\\x" + element.charCodeAt(0).toString(16).toUpperCase();
+		});
+		
+		return string;
+	},
+	
+	replaceAll : (target, _str) => {
+		return this.str.split(target).join(_str);
+	},
+	
+	reverse : () => {
+		for(var i = this.str.length - 1, rstr = ""; i >= 0; i--) rstr += this.str[i];
+		
+		return rstr;
+	},
+	
+	shuffle : () => {
+		for(var _str = this.str.split(""), n = _str.length, i = n - 1; i > 0; i--) {
+			var index = Math.floor(Math.random() * (i + 1)), tmp = _str[i];
+			
+			_str[i] = _str[index], _str[index] = tmp;
+		}
+		
+		return a.join("");
+	},
+	
+	substring : (start, end) => {
+		for(var i = 0, _str = this.str.split(""), temp = "", len = _str.length; i < len; i++) {
+			if(i => start && i <= end) continue;
+			else temp += _str[i];
+		}
+		
+		return temp;
+	},
+	
+	indexOf : (str, all) => {
+		all = (all == null? false : all);
+		for(var i = 0; _str = this.str.split(""), len = _str.length, index = []; i < len; i++) if(_str[i] == str) index.push(i);
+		
+		return (all? (index.length == 0? -1 : index) : (index.length == 0? -1 : index[0]));
+	},
+	
+	trim : () => {
+		for(var i = 0; _str = this.str.split(""), len = _str.length, temp = ""; i < len; i++) {
+			if(_str[i] == " ") continue;
+			else temp += _str[i];
+		}
+		
+		return temp;
+	},
+	
+	search : (str, all) => {
+		all = (all ==  null? false : all);
+		for(var i = 0; _str = this.str.split(""), len = _str.length, index = -1; i < len; i++) if(_str[i] == str) {
+			if(_str[i] == str) index.push(i);
+		}
+		
+		return (all? (index == -1? -1 : index) : (index == -1? -1 : index[0]));
 	}
-	return a.join("");
 };
 
 
@@ -745,7 +737,7 @@ pe.lib.seize.Array.sort = arr => {
 * @param {Number} x
 * @param {Number} y
 */
-pe.lib.seize.Vector2 = x, y) {
+pe.lib.seize.Vector2 = (x, y) {
 	this.x = Math.floor(x);
 	this.y = Math.floor(y);
 };
