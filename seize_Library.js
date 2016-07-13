@@ -226,9 +226,7 @@ var Button = android.widget.Button,
 	RecognizerIntent = android.speech.RecognizerIntent,
 	Thread = java.lang.Thread,
 	Runnable = java.lang.Runnable,
-	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, ctx.getResources().getDisplayMetrics()),
-	ServerSocket = java.net.ServerSocket;
-	Socket = java.net.Socket;
+	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, pe.CONTEXT.getResources().getDisplayMetrics());
 
 
 var client_socket, client_bw;
@@ -247,7 +245,11 @@ pe.lib.seize.widget = {
 
 
 pe.android.widget = {
-
+	
+	ProgressBarStyle : {
+		HORIZONTAL : 0, VERTICAL : 1, 
+	},
+	
 	Button : (text, textColor, textSize, width, height, drawable) => {
 		var btn = new Button(pe.CONTEXT);
 		btn.setText(text);
@@ -292,30 +294,30 @@ pe.lib.seize.graphics = {
 			return android.graphics.Bitmap.createScaledBitmap(android.graphics.Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
-		nienPatch : (bm, startX, startY, ninePatchWidth, ninePatchHeight, width, height) => { //by affogatoman
-			var blank = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888),
-				part1 = Bitmap.createBitmap(bm, 0, 0, startX, startY),
-				part2 = Bitmap.createBitmap(bm, startX, 0, ninePatchWidth, startY),
-				part3 = Bitmap.createBitmap(bm, startX + ninePatchWidth, 0, bm.getWidth() - startX - ninePatchWidth, startY),
-				part4 = Bitmap.createBitmap(bm, 0, startY, startX, ninePatchHeight),
-				part5 = Bitmap.createBitmap(bm, startX, startY, ninePatchWidth, ninePatchHeight),
-				part6 = Bitmap.createBitmap(bm, startX + ninePatchWidth, startY, bm.getWidth() - startX - ninePatchWidth, ninePatchHeight),
-				part7 = Bitmap.createBitmap(bm, 0, startY + ninePatchHeight, startX, bm.getHeight() - startY - ninePatchHeight),
-				part8 = Bitmap.createBitmap(bm, startX, startY + ninePatchHeight, ninePatchWidth, bm.getHeight() - startY - ninePatchHeight),
-				part9 = Bitmap.createBitmap(bm, startX + ninePatchWidth, startY + ninePatchHeight, bm.getWidth() - startX - ninePatchWidth, bm.getHeight() - startY - ninePatchHeight),
-				canvas = new Canvas(blank);
+		nienPatch : (bm, x, y, nx, ny, width, height) => {
+			var _bm = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888),
+				left_top = Bitmap.createBitmap(bm, 0, 0, x, y),
+				center_top = Bitmap.createBitmap(bm, x, 0, nx, y),
+				right_top = Bitmap.createBitmap(bm, x + nx, 0, bm.getWidth() - x - nx, y),
+				left_center = Bitmap.createBitmap(bm, 0, y, x, ny),
+				center = Bitmap.createBitmap(bm, x, y, nx, ny),
+				right_center = Bitmap.createBitmap(bm, x + nx, y, bm.getWidth() - x - nx, ny),
+				left_bottom = Bitmap.createBitmap(bm, 0, y + ny, x, bm.getHeight() - y - ny),
+				center_bottom = Bitmap.createBitmap(bm, x, y + ny, nx, bm.getHeight() - y - ny),
+				right_bottom = Bitmap.createBitmap(bm, x + nx, y + ny, bm.getWidth() - x - nx, bm.getHeight() - y - ny),
+				canvas = new Canvas(_bm);
 			
-			canvas.drawBitmap(part1, 0, 0, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part2, width - bm.getWidth() + ninePatchWidth, startY, false), startX, 0, null);
-			canvas.drawBitmap(part3, width - bm.getWidth() + ninePatchWidth + startX, 0, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part4, startX, height - bm.getHeight() + ninePatchHeight, false), 0, startY, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part5, width - bm.getWidth() + ninePatchWidth, height - bm.getHeight() + ninePatchHeight, false), startX, startY, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part6, part3.getWidth(), height - bm.getHeight() + ninePatchHeight, false), width - bm.getWidth() + ninePatchWidth + startX, startY, null);
-			canvas.drawBitmap(part7, 0, height - bm.getHeight() + ninePatchHeight + startY, null);
-			canvas.drawBitmap(Bitmap.createScaledBitmap(part8, width - bm.getWidth() + ninePatchWidth, part7.getHeight(), false), startX, height - bm.getHeight() + ninePatchHeight + startY, null);
-			canvas.drawBitmap(part9, width - bm.getWidth() + ninePatchWidth + startX, height - bm.getHeight() + ninePatchHeight + startY, null);
+			canvas.drawBitmap(left_top, 0, 0, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(center_top, width - bm.getWidth() + nx, y, false), x, 0, null);
+			canvas.drawBitmap(right_top, width - bm.getWidth() + nx + x, 0, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(left_center, x, height - bm.getHeight() + ny, false), 0, y, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(center, width - bm.getWidth() + nx, height - bm.getHeight() + ny, false), x, y, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(right_center, right_top.getWidth(), height - bm.getHeight() + ny, false), width - bm.getWidth() + nx + x, y, null);
+			canvas.drawBitmap(left_bottom, 0, height - bm.getHeight() + ny + y, null);
+			canvas.drawBitmap(Bitmap.createScaledBitmap(center_bottom, width - bm.getWidth() + nx, left_bottom.getHeight(), false), x, height - bm.getHeight() + ny + y, null);
+			canvas.drawBitmap(right_bottom, width - bm.getWidth() + nx + x, height - bm.getHeight() + ny + y, null);
 			
-			return new BitmapDrawable(blank);
+			return new BitmapDrawable(_bm);
 		}
 	},
 	
@@ -370,7 +372,7 @@ pe.lib.seize.graphics = {
 * @param {Number} number
 * @return {Boolean}
 */
-pe.lib.seize.Math.isPrime = number => {
+pe.lib.Math.isPrime = number => {
 	if(number % 2 === 0 && number !== 2) 
 		return false;
 	
@@ -391,7 +393,7 @@ pe.lib.seize.Math.isPrime = number => {
 * @param {Number} number
 * @return {Array}
 */
-pe.lib.seize.Math.Factorization = number => {
+pe.lib.Math.Factorization = number => {
 	for(var i = 2, tmp = number, nums = []; i * i <= number; i += 2) {
 		while(!(tmp % i)) {
 			tmp /= i; 
@@ -413,7 +415,7 @@ pe.lib.seize.Math.Factorization = number => {
 * @param {Number} number
 * @return {Array}
 */
-pe.lib.seize.Math.divisor = number => {
+pe.lib.Math.divisor = number => {
 	var tmp = 1, nums = new Array();
 	
 	nums.push(1);
@@ -434,7 +436,7 @@ pe.lib.seize.Math.divisor = number => {
 * @param {Number} b
 * @return {Number}
 */
-pe.lib.seize.Math.max = (a, b) => {
+pe.lib.Math.max = (a, b) => {
 	return a === b? a : (a > b? a : b);
 };
 
@@ -445,7 +447,7 @@ pe.lib.seize.Math.max = (a, b) => {
 * @param {Number} b
 * @return {Number}
 */
-pe.lib.seize.Math.min = (a, b) => {
+pe.lib.Math.min = (a, b) => {
 	return a === b? a : (a < b? a : b);
 };
 
@@ -455,7 +457,7 @@ pe.lib.seize.Math.min = (a, b) => {
 * @param {Number} number
 * @return {Number}
 */
-pe.lib.seize.Math.factorial = number => {
+pe.lib.Math.factorial = number => {
 	var result = 1;
 	while(--number) {
 		result *= number + 1;
@@ -470,7 +472,7 @@ pe.lib.seize.Math.factorial = number => {
 * @param {Number} number
 * @return {Number}
 */
-pe.lib.seize.Math.toHexNumber = number => {
+pe.lib.Math.toHexNumber = number => {
 	return parseInt(number.toString(16));
 };
 
@@ -480,7 +482,7 @@ pe.lib.seize.Math.toHexNumber = number => {
 * @param {Number} 
 * @return {Number} 
 */
-pe.lib.seize.Math.hypot = () => {
+pe.lib.Math.hypot = () => {
 	for(var i = 0, h = 0; i < arguments.length; i++) h += arguments[i] * arguments[i];
 	
 	return Math.sqrt(h);
@@ -493,7 +495,7 @@ pe.lib.seize.Math.hypot = () => {
 * @param {Number} num2
 * @return {Number}
 */
-pe.lib.seize.Math.getGCD = (num1, num2) => {
+pe.lib.Math.getGCD = (num1, num2) => {
 	if(num1 < num2) 
 		return this.getGCD(num2, num1); 
 	
@@ -510,7 +512,7 @@ pe.lib.seize.Math.getGCD = (num1, num2) => {
 * @param {Number} num2
 * @return {Number}
 */
-pe.lib.seize.Math.getLCM = (num1, num2) => {
+pe.lib.Math.getLCM = (num1, num2) => {
 	return (num1 * num2) / this.getGCD(num1, num2); 
 };
 
@@ -522,7 +524,7 @@ pe.lib.seize.Math.getLCM = (num1, num2) => {
 * @param {Boolean} is prime
 * @return {Number}
 */
-pe.lib.seize.Math.random = (start, end, prime) => {
+pe.lib.Math.random = (start, end, prime) => {
 	var range = end - start, result;
 	
 	prime = (prime == null? false : prime);
@@ -544,7 +546,7 @@ pe.lib.seize.Math.random = (start, end, prime) => {
 * @param {Number} base
 * @return {Number}
 */
-pe.lib.seize.Math.log = (number, base) => {
+pe.lib.Math.log = (number, base) => {
 	return Math.log(number) / Math.log((base == null? 10 : base));
 };
 
@@ -554,7 +556,7 @@ pe.lib.seize.Math.log = (number, base) => {
 * @param {Number} n
 * @return {Number}
 */
-pe.lib.seize.Math.fibonacci = n => {
+pe.lib.Math.fibonacci = n => {
 	if(n <= 2) return 1;
 	for(var i = 2, fibo = [1, 1]; i <= n; i++) fibo[i] = fibo[i-1] + fibo[i-2];
 	
@@ -568,17 +570,17 @@ pe.lib.seize.Math.fibonacci = n => {
 * @param {Number} start
 * @param {Number} end
 */
-pe.lib.seize.Math.nativeSum = (arr, start, end) => {
+pe.lib.Math.nativeSum = (arr, start, end) => {
 	for(var i = start, temp = 0; end >= i; i += 1) temp += arr[i];
 	
 	return temp;
 };
 
 
-pe.lib.seize.String = str => this.str = str;
+pe.lib.String = str => this.str = str;
 
 
-pe.lib.seize.String.prototype = {
+pe.lib.String.prototype = {
 	toAscii : () => {
 		for(var i = 0, sp = this.str.split(""), eCode = ""; i < this.str.length; i ++) eCode += (i == sp.length - 1? sp[i].charCodeAt(0) : sp[i].charCodeAt(0) + " ");
 		
@@ -591,7 +593,9 @@ pe.lib.seize.String.prototype = {
 		return rCode;
 	},
 	
-	isEnglish : () => return /^[A-z]+$/.test(this.str);
+	isEnglish : () => {
+		return /^[A-z]+$/.test(this.str);
+	},
 	
 	toHexString : () => {
 		var string = "";
@@ -634,13 +638,13 @@ pe.lib.seize.String.prototype = {
 	
 	indexOf : (str, all) => {
 		all = (all == null? false : all);
-		for(var i = 0; _str = this.str.split(""), len = _str.length, index = []; i < len; i++) if(_str[i] == str) index.push(i);
+		for(var i = 0,  _str = this.str.split(""), len = _str.length, index = []; i < len; i++) if(_str[i] == str) index.push(i);
 		
 		return (all? (index.length == 0? -1 : index) : (index.length == 0? -1 : index[0]));
 	},
 	
 	trim : () => {
-		for(var i = 0; _str = this.str.split(""), len = _str.length, temp = ""; i < len; i++) {
+		for(var i = 0, _str = this.str.split(""), len = _str.length, temp = ""; i < len; i++) {
 			if(_str[i] == " ") continue;
 			else temp += _str[i];
 		}
@@ -650,7 +654,7 @@ pe.lib.seize.String.prototype = {
 	
 	search : (str, all) => {
 		all = (all ==  null? false : all);
-		for(var i = 0; _str = this.str.split(""), len = _str.length, index = -1; i < len; i++) if(_str[i] == str) {
+		for(var i = 0, _str = this.str.split(""), len = _str.length, index = -1; i < len; i++) if(_str[i] == str) {
 			if(_str[i] == str) index.push(i);
 		}
 		
@@ -664,7 +668,7 @@ pe.lib.seize.String.prototype = {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.seize.Array.max = arr => {
+pe.lib.Array.max = arr => {
 	return Math.max.apply(null, arr);
 };
 
@@ -674,7 +678,7 @@ pe.lib.seize.Array.max = arr => {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.seize.Array.min = arr => {
+pe.lib.Array.min = arr => {
 	return Math.min.apply(null, arr);
 };
 
@@ -684,7 +688,7 @@ pe.lib.seize.Array.min = arr => {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.seize.Array.average = arr => {
+pe.lib.Array.average = arr => {
 	return (arr.reduce((a, b) => {
 		return a + b;
 	}) / arr.length);
@@ -697,7 +701,7 @@ pe.lib.seize.Array.average = arr => {
 * @param {Array} b
 * @return {Boolean}
 */
-pe.lib.seize.Array.equals = (a, b) => {
+pe.lib.Array.equals = (a, b) => {
 	var index = -1, equals = true;
 	
 	if(a.length !== b.length) 
@@ -717,7 +721,7 @@ pe.lib.seize.Array.equals = (a, b) => {
 * @param {Array} arr
 * @return {Array}
 */
-pe.lib.seize.Array.sort = arr => {
+pe.lib.Array.sort = arr => {
 	if(arr.length === 0) 
 		return [];
 	
@@ -737,7 +741,7 @@ pe.lib.seize.Array.sort = arr => {
 * @param {Number} x
 * @param {Number} y
 */
-pe.lib.seize.Vector2 = (x, y) {
+pe.lib.seize.Vector2 = (x, y) => {
 	this.x = Math.floor(x);
 	this.y = Math.floor(y);
 };
@@ -853,12 +857,12 @@ pe.lib.seize.Vector2.prototype.getY = () => {
 
 /**
 * @3차원 벡터함수.
-* @param {Number|pe.lib.seize.Entity} x
+* @param {Number|pe.lib.Entity} x
 * @param {Number} y
 * @param {Number} z
 */
 pe.lib.seize.Vector3 = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Entity) {
+	if(x instanceof pe.lib.Entity) {
 		this.x = Math.floor(Entity.getX(x.ent));
 		this.y = Math.floor(Entity.getY(x.ent));
 		this.z = Math.floor(Entity.getZ(x.ent));
@@ -997,8 +1001,8 @@ pe.lib.seize.Vector3.prototype.getZ = () => {
 * @Entity객체를 생성합니다.
 * @namespace
 */
-pe.lib.seize.Entity = ent => {
-	if(ent instanceof pe.lib.seize.Entity) 
+pe.lib.Entity = ent => {
+	if(ent instanceof pe.lib.Entity) 
 		this.ent = ent.ent;
 		
 	else if(typeof ent === "number") 
@@ -1009,7 +1013,7 @@ pe.lib.seize.Entity = ent => {
 /**
 * @엔티티 타입목록 입니다.
 */
-pe.lib.seize.Entity.EntityTypes = {
+pe.lib.Entity.EntityTypes = {
 	HUMAN : 0,
 	PLAYER : 0,
 	CHICKEN : 10,
@@ -1055,14 +1059,14 @@ pe.lib.seize.Entity.EntityTypes = {
 * @모든 엔티티를 구합니다.
 * @return {Array}
 */
-pe.lib.seize.Entity.getAll = () => {
+pe.lib.Entity.getAll = () => {
 	return Entity.getAllMob().filter(ent => {
 		return Entity.getEntityTypeId(ent) > 0 && Entity.getEntityTypeId(ent) < 61 && ent != null;
 	});
 };
 
 
-pe.lib.seize.Entity.prototype = {};
+pe.lib.Entity.prototype = {};
 
 
 /**
@@ -1071,17 +1075,17 @@ pe.lib.seize.Entity.prototype = {};
 * @param {Number} range
 * @return {Array}
 */
-pe.lib.seize.Entity.prototype.getNearEnity = range => {
+pe.lib.Entity.prototype.getNearEnity = range => {
 	var vec;
 	
-	if(ent instanceof pe.lib.seize.Entity) 
+	if(ent instanceof pe.lib.Entity) 
 		vec = new pe.lib.seize.Vector3(e);
 		
 	else if(typeof ent === "number") 
-		vec = new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e));
+		vec = new pe.lib.seize.Vector3(new pe.lib.Entity(e));
 	
 	return this.getAll().filter(e => {
-		var vec2 = new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e));
+		var vec2 = new pe.lib.seize.Vector3(new pe.lib.Entity(e));
 		return vec.getDistance(vec2) <= range;
 	});
 };
@@ -1089,12 +1093,12 @@ pe.lib.seize.Entity.prototype.getNearEnity = range => {
 
 /**
 * @다른 엔티티와의 거리를 구합니다.
-* @param {EntityType|pe.lib.seize.Entity} e
+* @param {EntityType|pe.lib.Entity} e
 * @return {Number}
 */
-pe.lib.seize.Entity.prototype.getDistance = e => {
-	if(e instanceof pe.lib.seize.Entity) 
-		return new pe.lib.seize.Vector3(new pe.lib.seize.Entity(this.ent)).getDistance(new pe.lib.seize.Vector3(new pe.lib.seize.Entity(e)));
+pe.lib.Entity.prototype.getDistance = e => {
+	if(e instanceof pe.lib.Entity) 
+		return new pe.lib.seize.Vector3(new pe.lib.Entity(this.ent)).getDistance(new pe.lib.seize.Vector3(new pe.lib.Entity(e)));
 		
 	return Math.sqrt(Math.pow(Entity.getX(this.ent) - Entity.getX(e), 2) + Math.pow(Entity.getY(this.ent) - Entity.getY(e), 2) + Math.pow(Entity.getZ(this.ent) - Entity.getZ(e), 2));
 };
@@ -1105,7 +1109,7 @@ pe.lib.seize.Entity.prototype.getDistance = e => {
 * @param {Number} range
 * @return {Array}
 */
-pe.lib.seize.Entity.prototype.sortByDistance = range => {
+pe.lib.Entity.prototype.sortByDistance = range => {
 	var arr = this.getNearEnity(range), that = this;
 	
 	arr.sort((a, b) => {
@@ -1120,13 +1124,13 @@ pe.lib.seize.Entity.prototype.sortByDistance = range => {
 * @엔티티에게 대미지를 줍니다
 * @param {Number} amount
 */
-pe.lib.seize.Entity.prototype.damage = amount => {
+pe.lib.Entity.prototype.damage = amount => {
 	var hp = Entity.getHealth(this.ent);
 	Entity.setHealth(this.ent, hp - amount);
 };
 
 
-pe.lib.seize.Entity.prototype.setHealth = value => {
+pe.lib.Entity.prototype.setHealth = value => {
 	Entity.setHealth(this.ent, value);
 };
 
@@ -1137,7 +1141,7 @@ pe.lib.seize.Entity.prototype.setHealth = value => {
 * @param {Number} y
 * @param {Number} z
 */
-pe.lib.seize.Entity.prototype.setVel = (x, y, z) => {
+pe.lib.Entity.prototype.setVel = (x, y, z) => {
 	if(x != null) Entity.setVelX(this.ent, x);
 	if(y != null) Entity.setVelY(this.ent, y);
 	if(z != null) Entity.setVelZ(this.ent, z);
