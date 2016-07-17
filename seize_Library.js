@@ -12,8 +12,7 @@ const pe = {
 	
 	android : {},
 	
-	lib : {
-		seize : {},
+	seize : {
 		Math : {}, Array : {}, Vector2 : {}, Vector3 : {}
 	}
 };
@@ -62,8 +61,9 @@ const Utils = {
 	
 	render : (view, gravity, x, y) => {
 		Utils.uiThread(() => {
-			var window = new PopupWindow();
-			window.setContentView(view);
+			var window = new PopupWindow(), layout = new LinearLayout(pe.CONTEXT);
+			layout.addView(view);
+			window.setContentView(layout);
 			window.setWidth(-2);
 			window.setHeight(-2);
 			window.showAtLocation(pe.CONTEXT.getWindow().getDecorView(), gravity, x, y);
@@ -226,16 +226,78 @@ var Button = android.widget.Button,
 	RecognizerIntent = android.speech.RecognizerIntent,
 	Thread = java.lang.Thread,
 	Runnable = java.lang.Runnable,
-	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, pe.CONTEXT.getResources().getDisplayMetrics());
+	DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, pe.CONTEXT.getResources().getDisplayMetrics()),
+	ValueAnimator = android.animation.ValueAnimator,
+	AnimatorListenerAdapter = android.animation.AnimatorListenerAdapter;
 
 
-var client_socket, client_bw;
-
-
-pe.lib.seize.widget = {
+pe.seize.widget = {
 	
-	Button : () => {
+	ProgressBarStyle : {
+		HORIZONTAL : 0, VERTICAL : 1, CIRCLE : 2
+	},
+	
+	Button : function() {
+		this.btn = new Button(pe.CONTEXT);
+		this.text = "";
+		this.WIDTH = 0;
+		this.HEIGHT = 0;
 		
+		this.setText = str => {
+			this.text = str;
+			return this;
+		};
+		
+		this.setParams = (width, height) => {
+			this.WIDTH = width;
+			this.HEIGHT = height;
+			this.btn.setLayoutParams(new Params(this.WIDTH, this.HEIGHT));
+			return this;
+		};
+		
+		this.getWidth = () => {
+			return this.WIDTH;
+		};
+		
+		this.getHeight = () => {
+			return this.HEIGHT;
+		};
+		
+		this.get = () => {
+			var that = this;
+			try {
+			this.btn.setText(this.text);
+			this.btn.setBackgroundDrawable(null);
+			this.btn.setOnTouchListener(new OnTouchListener({
+				onTouch : (view, event) => {
+					switch(event.getAction()) {
+						case MotionEvent.ACTION_DOWN:
+							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							return true;
+							
+						case MotionEvent.ACTION_MOVE:
+							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							return true;
+							
+						case MotionEvent.ACTION_UP:
+							pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							return true;
+							
+						case MotionEvent.ACTION_CANCLE:
+							
+							return true;
+					}
+				}
+			}));
+			} catch(err) {
+				Utils.Debug(err);
+			}
+			return this.btn;
+		};
+		
+		this.show = (gravity, x, y) => {
+			Utils.render(this.get(), gravity, x, y);
+		};
 	},
 	
 	ToggleButton : () => {
@@ -245,10 +307,6 @@ pe.lib.seize.widget = {
 
 
 pe.android.widget = {
-	
-	ProgressBarStyle : {
-		HORIZONTAL : 0, VERTICAL : 1, 
-	},
 	
 	Button : (text, textColor, textSize, width, height, drawable) => {
 		var btn = new Button(pe.CONTEXT);
@@ -286,16 +344,16 @@ pe.android.widget = {
 };
 
 
-pe.lib.seize.graphics = {
+pe.seize.graphics = {
 	
 	Bitmap : {
 		
-		cutImage : (bm, x, y, width, height) => {
-			return android.graphics.Bitmap.createScaledBitmap(android.graphics.Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
+		cutBitmap : (bm, x, y, width, height) => {
+			return Bitmap.createScaledBitmap(Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
 		nienPatch : (bm, x, y, nx, ny, width, height) => {
-			var _bm = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888),
+			var _bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888),
 				left_top = Bitmap.createBitmap(bm, 0, 0, x, y),
 				center_top = Bitmap.createBitmap(bm, x, 0, nx, y),
 				right_top = Bitmap.createBitmap(bm, x + nx, 0, bm.getWidth() - x - nx, y),
@@ -323,6 +381,53 @@ pe.lib.seize.graphics = {
 	
 	drawable : {
 		
+		drawCircle : (view, width, height, x, y, color, _color, radius, alpha) => {
+			var bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888),
+				canvas = new Canvas(bm),
+				paint = new Paint();
+			
+			paint.setColor(_color);
+			if(alpha != null) paint.setAlpha(alpha);
+			paint.setAntiAlias(true);
+			
+			canvas.drawCircle(x, y, (radius == null? 15 * DP : radius), paint);
+			
+			view.setBackgroundDrawable(new BitmapDrawable(bm));
+		},
+		
+		RippleDrawable : (view, width, height, x, y, color, _color) => { 
+			var radius = pe.seize.Math.min(width, height) / 2, 
+				max_radius = (pe.seize.Math.hypot(width, height) / 2) + 100 * DP;
+				
+			var valueAnimator = ValueAnimator.ofFloat([radius, max_radius]),
+				_valueAnimatorX = ValueAnimator.ofFloat([x, width / 2]),
+				_valueAnimatorY = ValueAnimator.ofFloat([y, height / 2]);
+			
+			_valueAnimatorX.setDuration(500);
+			_valueAnimatorY.setDuration(500);
+			
+			valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener({
+				onAnimationUpdate : _valueAnimator => {
+					var current_radius = parseInt(_valueAnimator.getAnimatedValue()),
+						circle_point_x = _valueAnimatorX.getAnimatedValue(),
+						circle_point_y = _valueAnimatorY.getAnimatedValue(),
+						percent = 1 - (current_radius / max_radius);
+					
+					if(current_radius < max_radius) {
+						pe.seize.graphics.drawable.drawCircle(view, width, height, circle_point_x, circle_point_y, color, _color, current_radius);
+					}
+					
+					if(circle_point_x == width / 2) {
+						view.setBackgroundDrawable(null);
+					}
+				}
+			}));
+			
+			valueAnimator.setDuration(550);
+			valueAnimator.start();
+			_valueAnimatorX.start();
+			_valueAnimatorY.start();
+		}
 	},
 	
 	Color : {
@@ -372,7 +477,7 @@ pe.lib.seize.graphics = {
 * @param {Number} number
 * @return {Boolean}
 */
-pe.lib.Math.isPrime = number => {
+pe.seize.Math.isPrime = number => {
 	if(number % 2 === 0 && number !== 2) 
 		return false;
 	
@@ -393,7 +498,7 @@ pe.lib.Math.isPrime = number => {
 * @param {Number} number
 * @return {Array}
 */
-pe.lib.Math.Factorization = number => {
+pe.seize.Math.Factorization = number => {
 	for(var i = 2, tmp = number, nums = []; i * i <= number; i += 2) {
 		while(!(tmp % i)) {
 			tmp /= i; 
@@ -415,7 +520,7 @@ pe.lib.Math.Factorization = number => {
 * @param {Number} number
 * @return {Array}
 */
-pe.lib.Math.divisor = number => {
+pe.seize.Math.divisor = number => {
 	var tmp = 1, nums = new Array();
 	
 	nums.push(1);
@@ -436,7 +541,7 @@ pe.lib.Math.divisor = number => {
 * @param {Number} b
 * @return {Number}
 */
-pe.lib.Math.max = (a, b) => {
+pe.seize.Math.max = (a, b) => {
 	return a === b? a : (a > b? a : b);
 };
 
@@ -447,7 +552,7 @@ pe.lib.Math.max = (a, b) => {
 * @param {Number} b
 * @return {Number}
 */
-pe.lib.Math.min = (a, b) => {
+pe.seize.Math.min = (a, b) => {
 	return a === b? a : (a < b? a : b);
 };
 
@@ -457,7 +562,7 @@ pe.lib.Math.min = (a, b) => {
 * @param {Number} number
 * @return {Number}
 */
-pe.lib.Math.factorial = number => {
+pe.seize.Math.factorial = number => {
 	var result = 1;
 	while(--number) {
 		result *= number + 1;
@@ -472,7 +577,7 @@ pe.lib.Math.factorial = number => {
 * @param {Number} number
 * @return {Number}
 */
-pe.lib.Math.toHexNumber = number => {
+pe.seize.Math.toHexNumber = number => {
 	return parseInt(number.toString(16));
 };
 
@@ -482,10 +587,12 @@ pe.lib.Math.toHexNumber = number => {
 * @param {Number} 
 * @return {Number} 
 */
-pe.lib.Math.hypot = () => {
-	for(var i = 0, h = 0; i < arguments.length; i++) h += arguments[i] * arguments[i];
+pe.seize.Math.hypot = (x, y, z) => {
+	x = (x == null? 0 : x);
+	y = (y == null? 0 : y);
+	z = (z == null? 0 : z);
 	
-	return Math.sqrt(h);
+	return Math.sqrt((x * x) + (y * y) + (z * z));
 };
 
 
@@ -495,7 +602,7 @@ pe.lib.Math.hypot = () => {
 * @param {Number} num2
 * @return {Number}
 */
-pe.lib.Math.getGCD = (num1, num2) => {
+pe.seize.Math.getGCD = (num1, num2) => {
 	if(num1 < num2) 
 		return this.getGCD(num2, num1); 
 	
@@ -512,7 +619,7 @@ pe.lib.Math.getGCD = (num1, num2) => {
 * @param {Number} num2
 * @return {Number}
 */
-pe.lib.Math.getLCM = (num1, num2) => {
+pe.seize.Math.getLCM = (num1, num2) => {
 	return (num1 * num2) / this.getGCD(num1, num2); 
 };
 
@@ -524,7 +631,7 @@ pe.lib.Math.getLCM = (num1, num2) => {
 * @param {Boolean} is prime
 * @return {Number}
 */
-pe.lib.Math.random = (start, end, prime) => {
+pe.seize.Math.random = (start, end, prime) => {
 	var range = end - start, result;
 	
 	prime = (prime == null? false : prime);
@@ -546,7 +653,7 @@ pe.lib.Math.random = (start, end, prime) => {
 * @param {Number} base
 * @return {Number}
 */
-pe.lib.Math.log = (number, base) => {
+pe.seize.Math.log = (number, base) => {
 	return Math.log(number) / Math.log((base == null? 10 : base));
 };
 
@@ -556,7 +663,7 @@ pe.lib.Math.log = (number, base) => {
 * @param {Number} n
 * @return {Number}
 */
-pe.lib.Math.fibonacci = n => {
+pe.seize.Math.fibonacci = n => {
 	if(n <= 2) return 1;
 	for(var i = 2, fibo = [1, 1]; i <= n; i++) fibo[i] = fibo[i-1] + fibo[i-2];
 	
@@ -570,17 +677,17 @@ pe.lib.Math.fibonacci = n => {
 * @param {Number} start
 * @param {Number} end
 */
-pe.lib.Math.nativeSum = (arr, start, end) => {
+pe.seize.Math.nativeSum = (arr, start, end) => {
 	for(var i = start, temp = 0; end >= i; i += 1) temp += arr[i];
 	
 	return temp;
 };
 
 
-pe.lib.String = str => this.str = str;
+pe.seize.String = str => this.str = str;
 
 
-pe.lib.String.prototype = {
+pe.seize.String.prototype = {
 	toAscii : () => {
 		for(var i = 0, sp = this.str.split(""), eCode = ""; i < this.str.length; i ++) eCode += (i == sp.length - 1? sp[i].charCodeAt(0) : sp[i].charCodeAt(0) + " ");
 		
@@ -668,7 +775,7 @@ pe.lib.String.prototype = {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.Array.max = arr => {
+pe.seize.Array.max = arr => {
 	return Math.max.apply(null, arr);
 };
 
@@ -678,7 +785,7 @@ pe.lib.Array.max = arr => {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.Array.min = arr => {
+pe.seize.Array.min = arr => {
 	return Math.min.apply(null, arr);
 };
 
@@ -688,7 +795,7 @@ pe.lib.Array.min = arr => {
 * @param {Array} arr
 * @return {Number}
 */
-pe.lib.Array.average = arr => {
+pe.seize.Array.average = arr => {
 	return (arr.reduce((a, b) => {
 		return a + b;
 	}) / arr.length);
@@ -701,7 +808,7 @@ pe.lib.Array.average = arr => {
 * @param {Array} b
 * @return {Boolean}
 */
-pe.lib.Array.equals = (a, b) => {
+pe.seize.Array.equals = (a, b) => {
 	var index = -1, equals = true;
 	
 	if(a.length !== b.length) 
@@ -721,7 +828,7 @@ pe.lib.Array.equals = (a, b) => {
 * @param {Array} arr
 * @return {Array}
 */
-pe.lib.Array.sort = arr => {
+pe.seize.Array.sort = arr => {
 	if(arr.length === 0) 
 		return [];
 	
@@ -741,23 +848,23 @@ pe.lib.Array.sort = arr => {
 * @param {Number} x
 * @param {Number} y
 */
-pe.lib.seize.Vector2 = (x, y) => {
+pe.seize.Vector2 = (x, y) => {
 	this.x = Math.floor(x);
 	this.y = Math.floor(y);
 };
 
 
-pe.lib.seize.Vector2.prototype = {};
+pe.seize.Vector2.prototype = {};
 
 
 /**
 * @두 좌표간 거리를 구합니다.
-* @param {Number|pe.lib.seize.Vector2} x
+* @param {Number|pe.seize.Vector2} x
 * @param {Number} y
 * @return {Number}
 */
-pe.lib.seize.Vector2.prototype.getDistance = (x, y) => {
-	if(x instanceof pe.lib.seize.Vector2) 
+pe.seize.Vector2.prototype.getDistance = (x, y) => {
+	if(x instanceof pe.seize.Vector2) 
 		return Math.sqrt(Math.pow((this.x - x.x), 2) + Math.pow((this.y - x.y), 2));
 	
 	return Math.sqrt(Math.pow((this.x - x), 2) + Math.pow((this.y - y), 2));
@@ -766,29 +873,29 @@ pe.lib.seize.Vector2.prototype.getDistance = (x, y) => {
 
 /**
 * @지정된 좌표에 좌표를 더합니다.
-* @param {Number|pe.lib.seize.Vector2} x
+* @param {Number|pe.seize.Vector2} x
 * @param {Number} y
-* @return {pe.lib.seize.Vector2}
+* @return {pe.seize.Vector2}
 */
-pe.lib.seize.Vector2.prototype.add = (x, y) => {
-	if(x instanceof pe.lib.seize.Vector2) 
-		return new pe.lib.seize.Vector2(this.x + x.x, this.y + x.y);
+pe.seize.Vector2.prototype.add = (x, y) => {
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(this.x + x.x, this.y + x.y);
 	
-	return new pe.lib.seize.Vector2(this.x + x, this.y + y);
+	return new pe.seize.Vector2(this.x + x, this.y + y);
 };
 
 
 /**
 * @지정된 좌표에서 좌표를 뺍니다.
-* @param {Number|pe.lib.seize.Vector2} x
+* @param {Number|pe.seize.Vector2} x
 * @param {Number} y
-* @return {pe.lib.seize.Vector2}
+* @return {pe.seize.Vector2}
 */
-pe.lib.seize.Vector2.prototype.subtract = (x, y) => {
-	if(x instanceof pe.lib.seize.Vector2) 
-		return new pe.lib.seize.Vector2(this.x - x.x, this.y - x.y);
+pe.seize.Vector2.prototype.subtract = (x, y) => {
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(this.x - x.x, this.y - x.y);
 	
-	return new pe.lib.seize.Vector2(this.x - x, this.y - y);
+	return new pe.seize.Vector2(this.x - x, this.y - y);
 };
 
 
@@ -797,22 +904,22 @@ pe.lib.seize.Vector2.prototype.subtract = (x, y) => {
 * @param {Number} x
 * @param {Number} y
 */
-pe.lib.seize.Vector2.prototype.set = (x, y) => {
-	if(x instanceof pe.lib.seize.Vector2) 
-		return new pe.lib.seize.Vector2(x.x, x.y);
+pe.seize.Vector2.prototype.set = (x, y) => {
+	if(x instanceof pe.seize.Vector2) 
+		return new pe.seize.Vector2(x.x, x.y);
 	
-	return new pe.lib.seize.Vector2(Math.floor(x), Math.floor(y), Math.floor(z));
+	return new pe.seize.Vector2(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
 
 /**
 * @좌표 혹은 벡터가 같은지 비교합니다.
-* @param {Number|pe.lib.seize.Vector2} x
+* @param {Number|pe.seize.Vector2} x
 * @param {Number} y
 * @return {Boolean}
 */
-pe.lib.seize.Vector2.prototype.equals = (x, y) => {
-	if(x instanceof pe.lib.seize.Vector2) 
+pe.seize.Vector2.prototype.equals = (x, y) => {
+	if(x instanceof pe.seize.Vector2) 
 		return this.x === x.x && this.y === x.y;
 	
 	return this.x === Math.floor(x) && this.y === Math.floor(y);
@@ -823,7 +930,7 @@ pe.lib.seize.Vector2.prototype.equals = (x, y) => {
 * @좌표를 배열로 변환합니다.
 * @return {Array}
 */
-pe.lib.seize.Vector2.prototype.toArray = () => {
+pe.seize.Vector2.prototype.toArray = () => {
 	return [this.x, this.y];
 };
 
@@ -832,7 +939,7 @@ pe.lib.seize.Vector2.prototype.toArray = () => {
 * @좌표를 문자열로 변환합니다.
 * @return {String}
 */
-pe.lib.seize.Vector2.prototype.toString = () => {
+pe.seize.Vector2.prototype.toString = () => {
 	return "[ " + this.toArray().join(", ") + " ]";
 };
 
@@ -841,7 +948,7 @@ pe.lib.seize.Vector2.prototype.toString = () => {
 * @2차원 벡터의 x값을 구합니다.
 * @return {Number}
 */
-pe.lib.seize.Vector2.prototype.getX = () => {
+pe.seize.Vector2.prototype.getX = () => {
 	return this.x;
 };
 
@@ -850,19 +957,19 @@ pe.lib.seize.Vector2.prototype.getX = () => {
 * @2차원 벡터의 y값을 구합니다.
 * @return {Number}
 */
-pe.lib.seize.Vector2.prototype.getY = () => {
+pe.seize.Vector2.prototype.getY = () => {
 	return this.y;
 };
 
 
 /**
 * @3차원 벡터함수.
-* @param {Number|pe.lib.Entity} x
+* @param {Number|pe.seize.Entity} x
 * @param {Number} y
 * @param {Number} z
 */
-pe.lib.seize.Vector3 = (x, y, z) => {
-	if(x instanceof pe.lib.Entity) {
+pe.seize.Vector3 = (x, y, z) => {
+	if(x instanceof pe.seize.Entity) {
 		this.x = Math.floor(Entity.getX(x.ent));
 		this.y = Math.floor(Entity.getY(x.ent));
 		this.z = Math.floor(Entity.getZ(x.ent));
@@ -875,62 +982,62 @@ pe.lib.seize.Vector3 = (x, y, z) => {
 };
 
 
-pe.lib.seize.Vector3.prototype = {};
+pe.seize.Vector3.prototype = {};
 
 
 /**
 * @지정된 좌표를 변경합니다.
-* @param {Number|pe.lib.seize.Vector3} x
+* @param {Number|pe.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 */
-pe.lib.seize.Vector3.prototype.set = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Vector3) 
-		return new pe.lib.seize.Vector3(x.x, x.y, x.z);
+pe.seize.Vector3.prototype.set = (x, y, z) => {
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(x.x, x.y, x.z);
 	
-	return new pe.lib.seize.Vector3(Math.floor(x), Math.floor(y), Math.floor(z));
+	return new pe.seize.Vector3(Math.floor(x), Math.floor(y), Math.floor(z));
 };
 
 
 /**
 * @지정된 좌표에 더합니다.
-* @param {Number|pe.lib.seize.Vector3} x
+* @param {Number|pe.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
-* @return {pe.lib.seize.Vector3}
+* @return {pe.seize.Vector3}
 */
-pe.lib.seize.Vector3.prototype.add = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Vector3) 
-		return new pe.lib.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
+pe.seize.Vector3.prototype.add = (x, y, z) => {
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(this.x + x.x, this.y + x.y, this.z + x.z);
 	
-	return new pe.lib.seize.Vector3(this.x + Math.floor(x), this.y + Math.floor(y), this.z + Math.floor(z));
+	return new pe.seize.Vector3(this.x + Math.floor(x), this.y + Math.floor(y), this.z + Math.floor(z));
 };
 
 
 /**
 * @지정된 좌표에서 뺍니다.
-* @param {Number|pe.lib.seize.Vector3} x
+* @param {Number|pe.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
-* @return {pe.lib.seize.Vector3}
+* @return {pe.seize.Vector3}
 */
-pe.lib.seize.Vector3.prototype.subtract = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Vector3) 
-		return new pe.lib.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
+pe.seize.Vector3.prototype.subtract = (x, y, z) => {
+	if(x instanceof pe.seize.Vector3) 
+		return new pe.seize.Vector3(this.x - x.x, this.y - x.y, this.z - x.z);
 	
-	return new pe.lib.seize.Vector3(this.x - Math.floor(x), this.y - Math.floor(y), this.z - Math.floor(z));
+	return new pe.seize.Vector3(this.x - Math.floor(x), this.y - Math.floor(y), this.z - Math.floor(z));
 };
 
 
 /**
 * @두 좌표 혹은 벡터가 같은지 확인합니다.
-* @param {Number|pe.lib.seize.Vector3} x
+* @param {Number|pe.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 * @return {Boolean}
 */
-pe.lib.seize.Vector3.prototype.equals = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Vector3) 
+pe.seize.Vector3.prototype.equals = (x, y, z) => {
+	if(x instanceof pe.seize.Vector3) 
 		return this.x === x.x && this.y === x.y && this.z === x.z;
 	
 	return this.x === Math.floor(x) && this.y === Math.floor(y) && this.z === Math.floor(z);
@@ -941,7 +1048,7 @@ pe.lib.seize.Vector3.prototype.equals = (x, y, z) => {
 * @좌표를 배열로 변환합니다.
 * @return {Array}
 */
-pe.lib.seize.Vector3.prototype.toArray = () => {
+pe.seize.Vector3.prototype.toArray = () => {
 	return [this.x, this.y, this.z];
 };
 
@@ -950,20 +1057,20 @@ pe.lib.seize.Vector3.prototype.toArray = () => {
 * @좌표를 문자열로 변환합니다.
 * @return {String}
 */
-pe.lib.seize.Vector3.prototype.toString = () => {
+pe.seize.Vector3.prototype.toString = () => {
 	return "[ " + this.toArray().join(", ") + " ]";
 };
 
 
 /**
 * @두 좌표간 거리를 구합니다.
-* @param {Number|pe.lib.seize.Vector3} x
+* @param {Number|pe.seize.Vector3} x
 * @param {Number} y
 * @param {Number} z
 * @return {Number}
 */
-pe.lib.seize.Vector3.prototype.getDistance = (x, y, z) => {
-	if(x instanceof pe.lib.seize.Vector3) 
+pe.seize.Vector3.prototype.getDistance = (x, y, z) => {
+	if(x instanceof pe.seize.Vector3) 
 		return Math.sqrt(Math.pow(this.x - x.x, 2) + Math.pow(this.y - x.y, 2) + Math.pow(this.z - x.z, 2));
 	
 	return Math.sqrt(Math.pow(this.x - Math.floor(x), 2) + Math.pow(this.y - Math.floor(y), 2) + Math.low(this.z - Math.floor(z), 2));
@@ -974,7 +1081,7 @@ pe.lib.seize.Vector3.prototype.getDistance = (x, y, z) => {
 * @3차원 벡터의 x값을 구합니다.
 * @return {Number}
 */
-pe.lib.seize.Vector3.prototype.getX = () => {
+pe.seize.Vector3.prototype.getX = () => {
 	return this.x;
 };
 
@@ -983,7 +1090,7 @@ pe.lib.seize.Vector3.prototype.getX = () => {
 * @3차원 벡터의 y값을 구합니다.
 * @return {Number}
 */
-pe.lib.seize.Vector3.prototype.getY = () => {
+pe.seize.Vector3.prototype.getY = () => {
 	return this.y;
 };
 
@@ -992,7 +1099,7 @@ pe.lib.seize.Vector3.prototype.getY = () => {
 * @3차원 벡터의 z값을 구합니다.
 * @return {Number}
 */
-pe.lib.seize.Vector3.prototype.getZ = () => {
+pe.seize.Vector3.prototype.getZ = () => {
 	return this.z;
 };
 
@@ -1001,8 +1108,8 @@ pe.lib.seize.Vector3.prototype.getZ = () => {
 * @Entity객체를 생성합니다.
 * @namespace
 */
-pe.lib.Entity = ent => {
-	if(ent instanceof pe.lib.Entity) 
+pe.seize.Entity = ent => {
+	if(ent instanceof pe.seize.Entity) 
 		this.ent = ent.ent;
 		
 	else if(typeof ent === "number") 
@@ -1013,7 +1120,7 @@ pe.lib.Entity = ent => {
 /**
 * @엔티티 타입목록 입니다.
 */
-pe.lib.Entity.EntityTypes = {
+pe.seize.Entity.EntityTypes = {
 	HUMAN : 0,
 	PLAYER : 0,
 	CHICKEN : 10,
@@ -1059,14 +1166,14 @@ pe.lib.Entity.EntityTypes = {
 * @모든 엔티티를 구합니다.
 * @return {Array}
 */
-pe.lib.Entity.getAll = () => {
+pe.seize.Entity.getAll = () => {
 	return Entity.getAllMob().filter(ent => {
 		return Entity.getEntityTypeId(ent) > 0 && Entity.getEntityTypeId(ent) < 61 && ent != null;
 	});
 };
 
 
-pe.lib.Entity.prototype = {};
+pe.seize.Entity.prototype = {};
 
 
 /**
@@ -1075,17 +1182,17 @@ pe.lib.Entity.prototype = {};
 * @param {Number} range
 * @return {Array}
 */
-pe.lib.Entity.prototype.getNearEnity = range => {
+pe.seize.Entity.prototype.getNearEnity = range => {
 	var vec;
 	
-	if(ent instanceof pe.lib.Entity) 
-		vec = new pe.lib.seize.Vector3(e);
+	if(ent instanceof pe.seize.Entity) 
+		vec = new pe.seize.Vector3(e);
 		
 	else if(typeof ent === "number") 
-		vec = new pe.lib.seize.Vector3(new pe.lib.Entity(e));
+		vec = new pe.seize.Vector3(new pe.seize.Entity(e));
 	
 	return this.getAll().filter(e => {
-		var vec2 = new pe.lib.seize.Vector3(new pe.lib.Entity(e));
+		var vec2 = new pe.seize.Vector3(new pe.seize.Entity(e));
 		return vec.getDistance(vec2) <= range;
 	});
 };
@@ -1093,12 +1200,12 @@ pe.lib.Entity.prototype.getNearEnity = range => {
 
 /**
 * @다른 엔티티와의 거리를 구합니다.
-* @param {EntityType|pe.lib.Entity} e
+* @param {EntityType|pe.seize.Entity} e
 * @return {Number}
 */
-pe.lib.Entity.prototype.getDistance = e => {
-	if(e instanceof pe.lib.Entity) 
-		return new pe.lib.seize.Vector3(new pe.lib.Entity(this.ent)).getDistance(new pe.lib.seize.Vector3(new pe.lib.Entity(e)));
+pe.seize.Entity.prototype.getDistance = e => {
+	if(e instanceof pe.seize.Entity) 
+		return new pe.seize.Vector3(new pe.seize.Entity(this.ent)).getDistance(new pe.seize.Vector3(new pe.seize.Entity(e)));
 		
 	return Math.sqrt(Math.pow(Entity.getX(this.ent) - Entity.getX(e), 2) + Math.pow(Entity.getY(this.ent) - Entity.getY(e), 2) + Math.pow(Entity.getZ(this.ent) - Entity.getZ(e), 2));
 };
@@ -1109,7 +1216,7 @@ pe.lib.Entity.prototype.getDistance = e => {
 * @param {Number} range
 * @return {Array}
 */
-pe.lib.Entity.prototype.sortByDistance = range => {
+pe.seize.Entity.prototype.sortByDistance = range => {
 	var arr = this.getNearEnity(range), that = this;
 	
 	arr.sort((a, b) => {
@@ -1124,13 +1231,13 @@ pe.lib.Entity.prototype.sortByDistance = range => {
 * @엔티티에게 대미지를 줍니다
 * @param {Number} amount
 */
-pe.lib.Entity.prototype.damage = amount => {
+pe.seize.Entity.prototype.damage = amount => {
 	var hp = Entity.getHealth(this.ent);
 	Entity.setHealth(this.ent, hp - amount);
 };
 
 
-pe.lib.Entity.prototype.setHealth = value => {
+pe.seize.Entity.prototype.setHealth = value => {
 	Entity.setHealth(this.ent, value);
 };
 
@@ -1141,7 +1248,7 @@ pe.lib.Entity.prototype.setHealth = value => {
 * @param {Number} y
 * @param {Number} z
 */
-pe.lib.Entity.prototype.setVel = (x, y, z) => {
+pe.seize.Entity.prototype.setVel = (x, y, z) => {
 	if(x != null) Entity.setVelX(this.ent, x);
 	if(y != null) Entity.setVelY(this.ent, y);
 	if(z != null) Entity.setVelZ(this.ent, z);
@@ -1273,5 +1380,9 @@ var selectLevelHook = () => {
 		SO.putProperty(scope, "pe", pe);
 		SO.putProperty(scope, "Utils", Utils);
 	}
-}
+};
 
+
+var newLevel = () => {
+	new pe.seize.widget.Button().setText("test button").setParams(100 * DP, 35 * DP).show(Gravity.CENTER, 0, 0);
+};
