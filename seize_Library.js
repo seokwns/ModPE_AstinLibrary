@@ -283,7 +283,7 @@ pe.seize.widget = {
 							pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
 							return true;
 							
-						case MotionEvent.ACTION_CANCLE:
+						case MotionEvent.ACTION_CANCEL:
 							
 							return true;
 					}
