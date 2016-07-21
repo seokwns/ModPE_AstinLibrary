@@ -352,7 +352,7 @@ pe.seize.graphics = {
 			return Bitmap.createScaledBitmap(Bitmap.createBitmap(bm, x, y, width, height), width * DP, height * DP, false);
 		},
 		
-		nienPatch : (bm, x, y, nx, ny, width, height) => {
+		ninePatch : (bm, x, y, nx, ny, width, height) => {
 			var _bm = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888),
 				left_top = Bitmap.createBitmap(bm, 0, 0, x, y),
 				center_top = Bitmap.createBitmap(bm, x, 0, nx, y),
@@ -1135,6 +1135,7 @@ pe.seize.Entity.EntityTypes = {
 	IRONGOLEM : 20,
 	SNOWGOLEM : 21,
 	OCELOT : 22,
+	HORSE : 23,
 	ZOMBIE : 32,
 	ZOMBIE_PIGMAN : 36,
 	CREEPER : 33,
