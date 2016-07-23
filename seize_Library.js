@@ -14,7 +14,9 @@ const pe = {
 	
 	seize : {
 		Math : {}, Array : {}, Vector2 : {}, Vector3 : {}
-	}
+	},
+	
+	mc : {}
 };
 
 
@@ -167,6 +169,14 @@ const Utils = {
 	
 	getAbsolutePath : () => {
 		return android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+	},
+	
+	DB_PATH : () => {
+		return this.getAbsolutePath() + "/Android/data/pe.seize.library/";
+	},
+	
+	init : () => {
+		var DataBase = new File(this.DB_PATH());
 	}
 }
 
@@ -242,6 +252,9 @@ pe.seize.widget = {
 		this.text = "";
 		this.WIDTH = 0;
 		this.HEIGHT = 0;
+		this.color = null;
+		this.effectColor = Color.rgb(0, 150, 255);
+		this.listener = () => {};
 		
 		this.setText = str => {
 			this.text = str;
@@ -255,6 +268,21 @@ pe.seize.widget = {
 			return this;
 		};
 		
+		this.setEffectColor = color => {
+			this.effectColor = color;
+			return this;
+		};
+		
+		this.setColor = _color => {
+			this.color = _color;
+			return this;
+		};
+		
+		this.setOnClickListener = _listener => {
+			this.listener = _listener;
+			return this;
+		};
+		
 		this.getWidth = () => {
 			return this.WIDTH;
 		};
@@ -265,33 +293,31 @@ pe.seize.widget = {
 		
 		this.get = () => {
 			var that = this;
-			try {
 			this.btn.setText(this.text);
 			this.btn.setBackgroundDrawable(null);
+			
 			this.btn.setOnTouchListener(new OnTouchListener({
 				onTouch : (view, event) => {
 					switch(event.getAction()) {
 						case MotionEvent.ACTION_DOWN:
-							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.color, that.effectColor);
 							return true;
 							
 						case MotionEvent.ACTION_MOVE:
-							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.color, that.effectColor);
 							return true;
 							
 						case MotionEvent.ACTION_UP:
-							pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), Color.rgb(215, 255, 255), Color.BLUE);
+							pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.color, that.effectColor, that.listener);
 							return true;
 							
-						case MotionEvent.ACTION_CANCEL:
+						case MotionEvent.ACTION_CANCLE:
 							
 							return true;
 					}
 				}
 			}));
-			} catch(err) {
-				Utils.Debug(err);
-			}
+			
 			return this.btn;
 		};
 		
@@ -392,41 +418,117 @@ pe.seize.graphics = {
 			
 			canvas.drawCircle(x, y, (radius == null? 15 * DP : radius), paint);
 			
-			view.setBackgroundDrawable(new BitmapDrawable(bm));
+			if(color == null) view.setBackgroundDrawable(new BitmapDrawable(bm));
+			else view.setBackgroundDrawable(new LayerDrawable([new ColorDrawable(color), new BitmapDrawable(bm)]));
 		},
 		
-		RippleDrawable : (view, width, height, x, y, color, _color) => { 
+		RippleDrawable : (view, width, height, x, y, color, _color, func) => { 
 			var radius = pe.seize.Math.min(width, height) / 2, 
-				max_radius = (pe.seize.Math.hypot(width, height) / 2) + 100 * DP;
+				max_radius = (pe.seize.Math.hypot(width, height) / 2) + 100 * DP,
+				click = false;
 				
 			var valueAnimator = ValueAnimator.ofFloat([radius, max_radius]),
 				_valueAnimatorX = ValueAnimator.ofFloat([x, width / 2]),
 				_valueAnimatorY = ValueAnimator.ofFloat([y, height / 2]);
 			
-			_valueAnimatorX.setDuration(500);
-			_valueAnimatorY.setDuration(500);
+			_valueAnimatorX.setDuration(300);
+			_valueAnimatorY.setDuration(300);
 			
 			valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener({
 				onAnimationUpdate : _valueAnimator => {
-					var current_radius = parseInt(_valueAnimator.getAnimatedValue()),
+					var current_radius = _valueAnimator.getAnimatedValue(),
 						circle_point_x = _valueAnimatorX.getAnimatedValue(),
 						circle_point_y = _valueAnimatorY.getAnimatedValue(),
 						percent = 1 - (current_radius / max_radius);
 					
 					if(current_radius < max_radius) {
-						pe.seize.graphics.drawable.drawCircle(view, width, height, circle_point_x, circle_point_y, color, _color, current_radius);
+						pe.seize.graphics.drawable.drawCircle(view, width, height, circle_point_x, circle_point_y, color,  _color, current_radius);
 					}
 					
 					if(circle_point_x == width / 2) {
-						view.setBackgroundDrawable(null);
+						if(color == null) view.setBackgroundDrawable(null);
+						if(color != null) view.setBackgroundDrawable(new ColorDrawable(color));
+						if(func != null && !click) func();
+						
+						click = true;
 					}
 				}
 			}));
 			
-			valueAnimator.setDuration(550);
+			valueAnimator.setDuration(350);
 			valueAnimator.start();
 			_valueAnimatorX.start();
 			_valueAnimatorY.start();
+		},
+		
+		CHECKBOX_OFF : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_check_box_outline_blank_white_24dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		CHECKBOX_ON : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_check_box_white_24dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		RADIO_OFF : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_radio_button_unchecked_white_24dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		RADIO_ON : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_radio_button_checked_white_24dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		CLOSE : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_close_white_48dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		ADD : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_add_white_48dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
+		},
+		
+		COMPLETE : () => {
+			try {
+				var image = new BitmapFactory.decodeFile(Utils.DB_PATH() + "ic_check_white_48dp.png");
+				
+				return new BitmapDrawable(image);
+			} catch(err) {
+				Utils.Toast("Image file does not exist.");
+			}
 		}
 	},
 	
@@ -465,6 +567,116 @@ pe.seize.graphics = {
 		return BitmapDrawable(Bitmap.createScaledBitmap(Bitmap.createBitmap(img, x, y, width, height), 32, 32, false));
 	}
 };
+
+
+pe.mc.graphics = {
+	
+	drawable : {
+		
+		BUTTON_UNPRESSED : (width, height) => {
+			var bitmap = Bitmap.createBitmap(sheet, 8, 32, 8, 8),
+				bit = Bitmap.createScaledBitmap(bitmap, 16  *  DP, 16  *  DP, false);
+					
+			return pe.seize.graphics.Bitmap.ninePatch(bit, 4  *  DP, 4  *  DP, 12  *  DP, 14  *  DP, width, height);
+		},
+		
+		BUTTON_PRESSED : (width, height) => {
+			var bitmap = Bitmap.createBitmap(sheet, 0, 32, 8, 8),
+				bit = Bitmap.createScaledBitmap(bitmap, 16  *  DP, 16  *  DP, false);
+					
+			return pe.seize.graphics.Bitmap.ninePatch(bit, 4  *  DP, 4  *  DP, 12  *  DP, 14  *  DP, width, height);
+		},
+		
+		SWITCH_OFF : () => {
+			var bitmap = Bitmap.createBitmap(touchGUI, 160, 206, 38, 19),
+				bit = Bitmap.createScaledBitmap(bitmap, 76 * DP, 38 * DP, false);
+					
+			return new BitmapDrawable(bit);
+		},
+		
+		SWITCH_ON : () => {
+			var bitmap = Bitmap.createBitmap(touchGUI, 198, 206, 38, 19),
+				bit = Bitmap.createScaledBitmap(bitmap, 76 * DP, 37 * DP, false);
+					
+			return new BitmapDrawable(bit);
+		},
+		
+		TopBarDrawable : (width, height) => {
+			var bitmap = Bitmap.createBitmap(touchGUI, 150, 26, 14, 30);
+			for(var i = 0; i < 26; i++) {
+				bitmap.setPixel(2, i, bitmap.getPixel(3, i));
+				bitmap.setPixel(11, i, bitmap.getPixel(10, i));
+			}
+			for(var i = 3; i < 11; i++) {
+				bitmap.setPixel(i, 25, bitmap.getPixel(i, 26));
+				bitmap.setPixel(i, 26, bitmap.getPixel(i, 27));
+				bitmap.setPixel(i, 27, bitmap.getPixel(i, 28));
+				bitmap.setPixel(i, 28, 0x00000000);
+			}
+			for(var i = 0; i < 14; i++) {
+				bitmap.setPixel(i, 25, bitmap.getPixel(4, 25));
+				bitmap.setPixel(i, 26, bitmap.getPixel(4, 26));
+				bitmap.setPixel(i, 27, bitmap.getPixel(4, 27));
+			}
+			var bit = Bitmap.createScaledBitmap(bitmap, 28  *  DP, 60  *  DP, false);
+			
+			return pe.seize.graphics.Bitmap.ninePatch(bit, 5  *  DP, 7  *  DP, 46  *  DP, 22  *  DP, width, height);
+		},
+		
+		BACK_UNPRESSED : () => {
+			var bitmap = Bitmap.createBitmap(sheet, 60, 0, 18, 18),
+				bit = Bitmap.createScaledBitmap(bitmap, 100 * DP, 100 * DP, false);
+					
+			return new BitmapDrawable(bit);
+		},
+		
+		BACK_PRESSED : () => {
+			var bitmap = Bitmap.createBitmap(sheet, 78, 0, 18, 18),
+				bit = Bitmap.createScaledBitmap(bitmap, 100 * DP, 100 * DP,false);
+					
+			return new BitmapDrawable(bit);
+		},
+		
+		PANEL : () => {
+			var bitmap = Bitmap.createBitmap(sheet, 34, 43, 14, 14),
+				bit = Bitmap.createScaledBitmap(bitmap, 56  *  DP, 56  *  DP, false);
+					
+			return pe.seize.graphics.Bitmap.ninePatch(bit, 12  *  DP, 12  *  DP, 44  *  DP, 44  *  DP, width, height);
+		},
+		
+		EditTextDrawable : (width, height) => { //PlanP님의 MC - Class 소스
+			var O = Color.parseColor("#6B6163"),
+				I = Color.parseColor("#393939"),
+				color = [O, O, O, O, O, O, O, O, O, O, O, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, I, I, I, I, I, I, I, I, I, I, O,
+						 O, O, O, O, O, O, O, O, O, O, O, O];
+					 
+			var bit = Bitmap.createBitmap(12, 12, Bitmap.Config.ARGB_8888);
+			bit.setPixels(color, 0, 12, 0, 0, 12, 12);
+			var bitmap = Bitmap.createScaledBitmap(bit, 24 * DP, 24 * DP, false);
+			
+			return pe.seize.graphics.Bitmap.ninePatch(bitmap, 6 * DP, 6 * DP, 18 * DP, 18 * DP, width, height);
+		}
+	},
+	
+	Color : {
+		
+		PLAIN : Color.parseColor("#e1e1e1"),
+		IMPORTANT : Color.parseColor("#ffffa1"),
+		WARNING : Color.parseColor("#FF0000"),
+		PROGRESS : Color.parseColor("#ff84ff84"),
+		PROGRSSS_BACKGROUND : Color.parseColor("#ff848184")
+	},
+}
 
 
 /**
@@ -1179,18 +1391,11 @@ pe.seize.Entity.prototype = {};
 
 /**
 * @특정 엔티티를 기준으로 특정범위에 있는 엔티티를 구합니다.
-* @param {EntityId} e
 * @param {Number} range
 * @return {Array}
 */
 pe.seize.Entity.prototype.getNearEnity = range => {
-	var vec;
-	
-	if(ent instanceof pe.seize.Entity) 
-		vec = new pe.seize.Vector3(e);
-		
-	else if(typeof ent === "number") 
-		vec = new pe.seize.Vector3(new pe.seize.Entity(e));
+	var vec = new pe.seize.Vector3(new pe.seize.Entity(this.ent));
 	
 	return this.getAll().filter(e => {
 		var vec2 = new pe.seize.Vector3(new pe.seize.Entity(e));
