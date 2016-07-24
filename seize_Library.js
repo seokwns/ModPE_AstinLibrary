@@ -22,6 +22,8 @@ const pe = {
 
 const Utils = {
 	
+	DP : android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, pe.CONTEXT.getResources().getDisplayMetrics()),
+	
 	Toast : (text, duration) => {
 		pe.CONTEXT.runOnUiThread(new Runnable({ run : () => {
 			Toast.makeText(pe.CONTEXT, text, (duration == null? Toast.LENGTH_SHORT : duration)).show();
