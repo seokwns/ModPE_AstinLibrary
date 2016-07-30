@@ -174,11 +174,12 @@ const Utils = {
 	},
 	
 	DB_PATH : () => {
-		return this.getAbsolutePath() + "/Android/data/pe.seize.library/";
+		return Utils.getAbsolutePath() + "/Android/data/pe.seize.library/";
 	},
 	
 	init : () => {
 		var DataBase = new File(this.DB_PATH());
+		images = [];
 	}
 }
 
@@ -256,10 +257,29 @@ pe.seize.widget = {
 		this.HEIGHT = 0;
 		this.color = null;
 		this.effectColor = Color.rgb(0, 150, 255);
+		this.textSize = 14;
+		this.textColor = Color.BLACK;
 		this.listener = () => {};
+		
+		this.btn.setTextSize(14);
+		this.btn.setAllCaps(false);
+		this.btn.setTextColor(Color.BLACK);
 		
 		this.setText = str => {
 			this.text = str;
+			this.btn.setText(str);
+			return this;
+		};
+		
+		this.setTextSize = size => {
+			this.textSize = size;
+			this.btn.setTextSize(size);
+			return this;
+		};
+		
+		this.setTextColor = color => {
+			this.textColor = color;
+			this.btn.setTextColor(color);
 			return this;
 		};
 		
@@ -295,7 +315,6 @@ pe.seize.widget = {
 		
 		this.get = () => {
 			var that = this;
-			this.btn.setText(this.text);
 			this.btn.setBackgroundDrawable(null);
 			
 			this.btn.setOnTouchListener(new OnTouchListener({
@@ -328,10 +347,120 @@ pe.seize.widget = {
 		};
 	},
 	
-	ToggleButton : () => {
+	CheckBox : function() {
+		this.btn = new ToggleButton(pe.CONTEXT);
+		this.textView = new TextView(pe.CONTEXT);
+		this.btnLayout = new LinearLayout(pe.CONTEXT);
+		this.text = "";
+		this.WIDTH = 0;
+		this.HEIGHT = 0;
+		this.checked = false;
+		this.textSize = 14;
+		this.textColor = Color.BLACK;
+		this.listener = () => {};
+		
+		this.textView.setTextSize(14);
+		this.textView.setTextColor(Color.BLACK);
+		this.textView.setGravity(Gravity.CENTER);
+		this.btn.setTextOn("");
+		this.btn.setTextOff("");
+		this.btn.setBackgroundDrawable(pe.seize.graphics.drawable.CHECKBOX_OFF());
+		
+		this.btnLayout.setOrientation(0);
+		this.btnLayout.setGravity(Gravity.CENTER);
+		
+		this.setText = str => {
+			this.text = str;
+			this.textView.setText(str);
+			return this;
+		};
+		
+		this.setTextSize = size => {
+			this.textSize = size;
+			this.textView.setTextSize(size);
+			return this;
+		};
+		
+		this.setTextColor = color => {
+			this.textColor = color;
+			this.textView.setTextColor(color);
+			return this;
+		};
+		
+		this.setChecked = checked => {
+			var that = this;
+			Utils.uiThread(() => {
+				that.checked = checked;
+				that.btn.setChecked(that.checked);
+			});
+			return this;
+		};
+		
+		this.setParams = (width, height) => {
+			this.WIDTH = width;
+			this.HEIGHT = height;
+			this.btnLayout.setLayoutParams(new Params(this.WIDTH, this.HEIGHT));
+			return this;
+		};
+		
+		this.setOnCheckedChangeListener = _listener => {
+			this.listener = _listener;
+			return this;
+		};
+		
+		this.getWidth = () => {
+			return this.WIDTH;
+		};
+		
+		this.getHeight = () => {
+			return this.HEIGHT;
+		};
+		
+		this.get = () => {
+			var that = this;
+			this.btn.setLayoutParams(new Params(30 * DP, 30 * DP));
+			this.btn.setOnCheckedChangeListener(new OnCheckedChangeListener({
+				onCheckedChanged : (toggle, isChecked) => {
+					if(isChecked) {
+						toggle.setBackgroundDrawable(pe.seize.graphics.drawable.CHECKBOX_ON());
+						that.listener(toggle, isChecked);
+					}
+					
+					if(!isChecked) {
+						toggle.setBackgroundDrawable(pe.seize.graphics.drawable.CHECKBOX_OFF());
+						that.listener(toggle, isChecked);
+					}
+				}
+			}));
+			this.btnLayout.addView(this.btn);
+			
+			this.textView.setLayoutParams(new Params(this.WIDTH - 35 * DP, this.HEIGHT));
+			this.btnLayout.addView(this.textView);
+			
+			return this.btnLayout;
+		};
+		
+		this.show = (gravity, x, y) => {
+			Utils.render(this.get(), gravity, x, y);
+		};
+	},
+	
+	RadioButton : function() {
+		
+	},
+	
+	ProgressBar : function(style) {
+		
+	},
+	
+	SeekBar : function() {
+		
+	},
+	
+	TextView : function() {
 		
 	}
-}
+};
 
 
 pe.android.widget = {
@@ -450,7 +579,7 @@ pe.seize.graphics = {
 					if(circle_point_x == width / 2) {
 						if(color == null) view.setBackgroundDrawable(null);
 						if(color != null) view.setBackgroundDrawable(new ColorDrawable(color));
-						if(func != null && !click) func();
+						if(func != null && !click) func(view);
 						
 						click = true;
 					}
@@ -575,11 +704,8 @@ pe.mc.graphics = {
 	
 	drawable : {
 		
-		BUTTON_UNPRESSED : (width, height) => {
-			var bitmap = Bitmap.createBitmap(sheet, 8, 32, 8, 8),
-				bit = Bitmap.createScaledBitmap(bitmap, 16  *  DP, 16  *  DP, false);
-					
-			return pe.seize.graphics.Bitmap.ninePatch(bit, 4  *  DP, 4  *  DP, 12  *  DP, 14  *  DP, width, height);
+		BUTTON_UNPRESSED : (width, height) => {	
+			return pe.seize.graphics.Bitmap.ninePatch(pe.seize.graphics.Bitmap.cutBitmap(sheet, 0, 32, 8, 8), 4  *  _DP, 4  * _DP, 8  *  _DP, 8  *  _DP, width, height);
 		},
 		
 		BUTTON_PRESSED : (width, height) => {
@@ -678,7 +804,7 @@ pe.mc.graphics = {
 		PROGRESS : Color.parseColor("#ff84ff84"),
 		PROGRSSS_BACKGROUND : Color.parseColor("#ff848184")
 	},
-}
+};
 
 
 /**
@@ -1592,5 +1718,20 @@ var selectLevelHook = () => {
 
 
 var newLevel = () => {
-	new pe.seize.widget.Button().setText("test button").setParams(100 * DP, 35 * DP).show(Gravity.CENTER, 0, 0);
+	new pe.seize.widget.Button()
+	.setText("test button")
+	.setParams(100 * Utils.DP, 35 * Utils.DP)
+	.setOnClickListener(function(view) {
+		Utils.Toast("Test");
+	})
+	.show(Gravity.CENTER, 0, 0);
+	
+	new pe.seize.widget.CheckBox()
+	.setText("Test CheckBox")
+	.setChecked(false)
+	.setOnCheckedChangeListener((toggle, isChecked) => {
+		
+	})
+	.setParams(100 * Utils.DP, 45 * Utils.DP)
+	.show(Gravity.CENTER, 0, 40 * Utils.DP);
 };
