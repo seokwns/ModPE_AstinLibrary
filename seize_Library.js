@@ -13,7 +13,7 @@ const pe = {
     seize: {
         widget: {},
         graphics: {},
-        io : {}
+        io: {}
     }
 };
 
@@ -247,57 +247,57 @@ const Utils = {
     init: () => {
         var images = ["ic_add_box_white_48dp.png", "ic_add_white_48dp.png", "ic_apps_white_48dp.png", "ic_arrow_back_white_48dp.png", "ic_arrow_downward_white_48dp.png", "ic_arrow_drop_down_white_48dp.png", "ic_arrow_drop_up_white_36dp.png", "ic_arrow_forward_white_48dp.png", "ic_arrow_upward_white_48dp.png", "ic_border_color_white_48dp.png", "ic_check_box_outline_blank_white_24dp.png", "ic_check_box_white_24dp.png", "ic_check_white_48dp.png", "ic_chevron_left_white_48dp.png", "ic_chevron_right_white_48dp.png", "ic_clear_white_48dp.png", "ic_close_white_48dp.png", "ic_content_copy_white_48dp.png", "ic_error_outline_white_48dp.png", "ic_error_white_48dp.png", "ic_expand_less_white_48dp.png", "ic_expand_more_white_48dp.png", "ic_menu_white_48dp.png", "ic_mode_edit_white_48dp.png", "ic_more_horiz_white_48dp.png", "ic_more_vert_white_48dp.png", "ic_radio_button_checked_white_24dp.png", "ic_radio_button_unchecked_white_24dp.png", "ic_refresh_white_48dp.png", "ic_subdirectory_arrow_left_white_48dp.png", "ic_warning_white_96dp.png"],
             image_length = [];
-			
-		var pw = new pe.seize.widget.PopupWindow();
-    pw.setTitle("Downloading resources");
 
-    var l = new LinearLayout(pe.CONTEXT);
-    l.setOrientation(1);
+        var pw = new pe.seize.widget.PopupWindow();
+        pw.setTitle("Downloading resources");
 
-    l.addView(pe.android.widget.TextView("라이브러리 리소스 파일이 존재하지 않습니다.\n정상적인 작동을 위해 리소스 파일(177KB)을 다운해야 합니다. 다운하시겠습니까?\n\n", Color.BLACK, 15, -1, -2, null));
-    l.addView(pe.android.widget.TextView("** 이 리소스 파일은 라이브러리 최초 실행시 한번만 다운됩니다. **\n** 저장 위치 : " + DB_PATH + " **", Color.RED, 15, -1, -2, null));
-    l.addView(pe.android.widget.space(1, 20 * Utils.DP));
-    l.addView(pe.android.widget.Divider(WIDTH - 20 * Utils.DP, 2 * Utils.DP, Color.GRAY));
-    l.addView(pe.android.widget.space(1, 3 * Utils.DP));
+        var l = new LinearLayout(pe.CONTEXT);
+        l.setOrientation(1);
 
-    var down = pe.android.widget.TextView("\nDownloading....", Color.BLACK, 15, -1, 40 * Utils.DP);
+        l.addView(pe.android.widget.TextView("라이브러리 리소스 파일이 존재하지 않습니다.\n정상적인 작동을 위해 리소스 파일(177KB)을 다운해야 합니다. 다운하시겠습니까?\n\n", Color.BLACK, 15, -1, -2, null));
+        l.addView(pe.android.widget.TextView("** 이 리소스 파일은 라이브러리 최초 실행시 한번만 다운됩니다. **\n** 저장 위치 : " + DB_PATH + " **", Color.RED, 15, -1, -2, null));
+        l.addView(pe.android.widget.space(1, 20 * Utils.DP));
+        l.addView(pe.android.widget.Divider(WIDTH - 20 * Utils.DP, 2 * Utils.DP, Color.GRAY));
+        l.addView(pe.android.widget.space(1, 3 * Utils.DP));
 
-    var bl = new LinearLayout(pe.CONTEXT);
-    var download = new pe.seize.widget.Button()
-        .setText("Download")
-        .setTextColor(Color.BLACK)
-        .setParams(150 * Utils.DP, 40 * Utils.DP)
-        .setOnClickListener(function(view) {
-            l.removeAllViews();
-            
-            l.addView(down);
-            l.addView(new pe.seize.widget.ProgressBar(0, 200 * Utils.DP, 7 * Utils.DP)
-                .setMax(100)
-                .setProgress(50)
-                .get());
-        });
-    bl.addView(download.get());
-    bl.addView(pe.android.widget.space(10 * Utils.DP, 1));
+        var down = pe.android.widget.TextView("\nDownloading....", Color.BLACK, 15, -1, 40 * Utils.DP);
 
-    var later = new pe.seize.widget.Button()
-        .setText("Later")
-        .setTextColor(Color.BLACK)
-        .setParams(150 * Utils.DP, 40 * Utils.DP);
-    bl.addView(later.get());
-    bl.setGravity(Gravity.CENTER);
-    l.addView(bl);
+        var bl = new LinearLayout(pe.CONTEXT);
+        var download = new pe.seize.widget.Button()
+            .setText("Download")
+            .setTextColor(Color.BLACK)
+            .setParams(150 * Utils.DP, 40 * Utils.DP)
+            .setOnClickListener(function(view) {
+                l.removeAllViews();
 
-    l.setPadding(15 * Utils.DP, 15 * Utils.DP, 15 * Utils.DP, 10 * Utils.DP);
-    pw.setContentView(l);
-    pw.show();
-    /*
-    for (var i = 0, len = images.length; i < len; i++) {
-        var file = new File(DB_PATH + images[i]);
-        if (!file.exists()) {
-            Utils.Download("https://raw.githubusercontent.com/Team-Meta/seize_Library/master/res/" + images[i], DB_PATH, images[i]);
+                l.addView(down);
+                l.addView(new pe.seize.widget.ProgressBar(0, 200 * Utils.DP, 7 * Utils.DP)
+                    .setMax(100)
+                    .setProgress(50)
+                    .get());
+            });
+        bl.addView(download.get());
+        bl.addView(pe.android.widget.space(10 * Utils.DP, 1));
+
+        var later = new pe.seize.widget.Button()
+            .setText("Later")
+            .setTextColor(Color.BLACK)
+            .setParams(150 * Utils.DP, 40 * Utils.DP);
+        bl.addView(later.get());
+        bl.setGravity(Gravity.CENTER);
+        l.addView(bl);
+
+        l.setPadding(15 * Utils.DP, 15 * Utils.DP, 15 * Utils.DP, 10 * Utils.DP);
+        pw.setContentView(l);
+        pw.show();
+        /*
+        for (var i = 0, len = images.length; i < len; i++) {
+            var file = new File(DB_PATH + images[i]);
+            if (!file.exists()) {
+                Utils.Download("https://raw.githubusercontent.com/Team-Meta/seize_Library/master/res/" + images[i], DB_PATH, images[i]);
+            }
         }
-    }
-    */
+        */
     },
 
     applyFont: function(view) {
@@ -1100,7 +1100,7 @@ pe.seize.io.File = function(path) {
 };
 
 pe.seize.io.File.prototype.create = function() {
-    if(!this._file.getParentFile().exists()) {
+    if (!this._file.getParentFile().exists()) {
         this._file.getParentFile().mkdirs();
     }
     this._file.createNewFile();
@@ -1108,7 +1108,7 @@ pe.seize.io.File.prototype.create = function() {
 };
 
 pe.seize.io.File.prototype.read = function() {
-    if(this._file.exists()) {
+    if (this._file.exists()) {
         var fis = new FileInputStream(path),
             isr = new InputStreamReader(fis),
             br = new BufferedReader(isr),
@@ -1213,9 +1213,8 @@ var selectLevelHook = () => {
 
 
 var newLevel = () => {
-    
+
 };
 
 
 Utils.init();
-
