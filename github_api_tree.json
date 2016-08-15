@@ -1,0 +1,73 @@
+{
+    "ic_plus" : {
+        "name" : "ic_add_white_48dp.png",
+        "size" : 116,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_add_white_48dp.png"
+    },
+    
+    "ic_apps" : {
+        "name" : "ic_apps_white_48dp.png",
+        "size" : 116,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_apps_white_48dp.png"
+    },
+    
+    "ic_check_box_off" : {
+        "name" : "ic_check_box_outline_blank_white_24dp.png",
+        "size" : 291,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_check_box_outline_blank_white_24dp.png",
+    },
+    
+    "ic_check_box_on" : {
+        "name" : "ic_check_box_white_24dp.png", 
+        "size" : 500,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_check_box_white_24dp"
+    },
+    
+    "ic_close" : {
+        "name" : "ic_close_white_48dp.png", 
+        "size" : 707,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_close_white_48dp.png"
+    },
+    
+    "ic_error" : {
+        "name" : "ic_error_outline_white_48dp.png",
+        "size" : 2641.92,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_error_outline_white_48dp"
+    },
+    
+    "ic_menu" : {
+        "name" : "ic_menu_white_48dp.png", 
+        "size" : 112,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_menu_white_48dp"
+    },
+    
+    "ic_edit" : {
+        "name" : "ic_mode_edit_white_48dp.png", 
+        "size" : 653,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_mode_edit_white_48dp"
+    },
+    
+    "ic_radio_on" : {
+        "name" : "ic_radio_button_checked_white_24dp.png", 
+        "size" : 1546.24,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_radio_button_checked_white_24dp.png"
+    },
+    
+    "ic_radio_off" : {
+        "name" : "ic_radio_button_unchecked_white_24dp.png", 
+        "size" : 1228.8,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_radio_button_unchecked_white_24dp.png"
+    },
+    
+    "ic_warning" : {
+        "name" : "ic_warning_white_96dp.png",
+        "size" : 1955.84,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/ic_warning_white_96dp.png"
+    },
+    
+    "roboto" : {
+        "name" : "Roboto-Regular",
+        "size" : 158720,
+        "url" : "https://raw.githubusercontent.com/seizePE/seize_ModPE_Library/master/res/Roboto-Regular.ttf"
+    }
+}
