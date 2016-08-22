@@ -21,62 +21,43 @@ const pe = {
 var Button = android.widget.Button;
 var TextView = android.widget.TextView;
 var ToggleButton = android.widget.ToggleButton;
-var CheckBox = android.widget.CheckBox;
-var Switch = android.widget.Switch;
-var SeekBar = android.widget.SeekBar;
 var ProgressBar = android.widget.ProgressBar;
 var PopupWindow = android.widget.PopupWindow;
 var Toast = android.widget.Toast;
-var EditText = android.widget.EditText;
 var OnCheckedChangeListener = android.widget.CompoundButton.OnCheckedChangeListener;
 var OnTouchListener = android.view.View.OnTouchListener;
-var OnClickListener = android.view.View.OnClickListener;
 var MotionEvent = android.view.MotionEvent;
 var Gravity = android.view.Gravity;
-var ScrollView = android.widget.ScrollView;
 var LinearLayout = android.widget.LinearLayout;
-var horizontalScrollView = android.widget.HorizontalScrollView;
-var FrameLayout = android.widget.FrameLayout;
 var R = android.R;
-var Bundle = android.os.Bundle;
 var WIDTH = pe.CONTEXT.getScreenWidth();
 var HEIGHT = pe.CONTEXT.getScreenHeight();
 var Bitmap = android.graphics.Bitmap;
 var BitmapFactory = android.graphics.BitmapFactory;
 var BitmapDrawable = android.graphics.drawable.BitmapDrawable;
-var Drawable = android.graphics.drawable.Drawable;
 var drawable = android.graphics.drawable;
 var ColorDrawable = android.graphics.drawable.ColorDrawable;
 var Color = android.graphics.Color;
 var Canvas = android.graphics.Canvas;
 var Paint = android.graphics.Paint;
 var Typeface = android.graphics.Typeface;
-var GradientDrawable = android.graphics.drawable.GradientDrawable;
-var ClipDrawable = android.graphics.drawable.ClipDrawable;
 var LayerDrawable = android.graphics.drawable.LayerDrawable;
 var PorterDuff = android.graphics.PorterDuff;
 var PorterDuffColorFilter = android.graphics.PorterDuffColorFilter;
 var File = java.io.File;
-var OutputStreamWriter = java.io.OutputStreamWriter;
 var FileOutputStream = java.io.FileOutputStream;
 var FileInputStream = java.io.FileInputStream;
 var FileReader = java.io.FileReader;
 var BufferedReader = java.io.BufferedReader;
-var BufferedWriter = java.io.BufferedWriter;
 var BufferedInputStream = java.io.BufferedInputStream;
-var BufferedOutputStream = java.io.BufferedOutputStream;
 var InputStreamReader = java.io.InputStreamReader;
 var SDCARD = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
 var DB_PATH = SDCARD + "/Android/data/pe.seize.library/";
 var Params = android.widget.LinearLayout.LayoutParams;
-var SpeechRecognizer = android.speech.SpeechRecognizer;
-var Intent = android.content.Intent;
-var RecognizerIntent = android.speech.RecognizerIntent;
 var Thread = java.lang.Thread;
 var Runnable = java.lang.Runnable;
 var DP = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 1, pe.CONTEXT.getResources().getDisplayMetrics());
 var ValueAnimator = android.animation.ValueAnimator;
-var AnimatorListenerAdapter = android.animation.AnimatorListenerAdapter;
 
 
 const Utils = {
@@ -86,14 +67,14 @@ const Utils = {
     Toast: (text, duration) => {
         pe.CONTEXT.runOnUiThread(new Runnable({
             run: () => {
-                Toast.makeText(pe.CONTEXT, text, (duration == null ? Toast.LENGTH_SHORT : duration)).show();
+                Toast.makeText(pe.CONTEXT, text, (duration === null ? Toast.LENGTH_SHORT : duration)).show();
             }
         }));
     },
 
-    uiThread: function(func) {
+    uiThread: function (func) {
         pe.CONTEXT.runOnUiThread(new Runnable({
-            run: function() {
+            run: function () {
                 try {
                     func();
                 } catch (err) {
@@ -151,18 +132,17 @@ const Utils = {
             minutes = date.getMinutes(),
             m, now;
 
-        if (hours > 12)
+        if (hours > 12) {
             m = "오후 " + (hours - 12);
-
-        else
+        } else {
             m = "오전 " + hours;
+        }
 
-        if (minutes >= 10)
+        if (minutes >= 10) {
             now = minutes;
-
-        else
+        } else {
             now = "0" + minutes;
-
+        }
         return year + "년 " + month + "월 " + day + "일 " + m + ":" + now;
     },
 
@@ -195,11 +175,13 @@ const Utils = {
         Utils.Thread(() => {
             var file = new File(path, name);
 
-            if (!file.getParentFile().exists())
+            if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
+            }
 
-            if (!file.exists())
+            if (!file.exists()) {
                 file.createNewFile();
+            }
 
             var _url = new java.net.URL(url),
                 urlConnect = _url.openConnection();
@@ -210,7 +192,7 @@ const Utils = {
                 buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
                 Count;
 
-            while ((Count = BIS.read(buffer)) != -1) {
+            while ((Count = BIS.read(buffer)) !== -1) {
                 FOS.write(buffer, 0, Count);
             }
 
@@ -267,7 +249,7 @@ const Utils = {
             .setText("Download")
             .setTextColor(Color.BLACK)
             .setParams(150 * Utils.DP, 40 * Utils.DP)
-            .setOnClickListener(function(view) {
+            .setOnClickListener(function (view) {
                 l.removeAllViews();
 
                 l.addView(down);
@@ -300,23 +282,27 @@ const Utils = {
         */
     },
 
-    applyFont: function(view) {
-        if (new File(DB_PATH + "Roboto-Regular.ttf").exists()) view.setTypeface(Typeface.createFromFile(DB_PATH + "Roboto-Regular.ttf"));
+    applyFont: function (view) {
+        if (new File(DB_PATH + "Roboto-Regular.ttf").exists()) {
+            view.setTypeface(Typeface.createFromFile(DB_PATH + "Roboto-Regular.ttf"));
+        }
     },
 
-    getOptions: function() {
+    getOptions: function () {
+        var bundle;
         try {
             var file = new File(DB_PATH + "options.txt"),
-                bundle = new android.os.Bundle();
-
-            var br = new BufferedReader(new FileReader(file)),
+                br = new BufferedReader(new FileReader(file)),
                 str, split;
+
+            bundle = new android.os.Bundle();
 
             while (true) {
                 str = br.readLine();
-                if (str == null) break;
-                split = str.split(' : ');
-                bundle.putString(split[0], split[1]);
+                if (str !== null) {
+                    split = str.split(" : ");
+                    bundle.putString(split[0], split[1]);
+                }
             }
         } catch (err) {
             Utils.Debug(err);
@@ -328,7 +314,7 @@ const Utils = {
 
 
 
-pe.seize.widget.Button = function() {
+pe.seize.widget.Button = function () {
     this.btn = new Button(pe.CONTEXT);
     this.text = "";
     this.WIDTH = 0;
@@ -338,7 +324,7 @@ pe.seize.widget.Button = function() {
     this.textSize = 14;
     this.textColor = Color.BLACK;
     this.drawable = null;
-    this.listener = function() {};
+    this.listener = function () {};
 
     this.btn.setTextSize(14);
     this.btn.setAllCaps(false);
@@ -347,56 +333,56 @@ pe.seize.widget.Button = function() {
 
 pe.seize.widget.Button.prototype = {
 
-    setText: function(str) {
+    setText: function (str) {
         this.text = str;
         this.btn.setText(str);
         return this;
     },
 
-    setTextSize: function(size) {
+    setTextSize: function (size) {
         this.textSize = size;
         this.btn.setTextSize(size);
         return this;
     },
 
-    setTextColor: function(color) {
+    setTextColor: function (color) {
         this.textColor = color;
         this.btn.setTextColor(color);
         return this;
     },
 
-    setParams: function(width, height) {
+    setParams: function (width, height) {
         this.WIDTH = width;
         this.HEIGHT = height;
         this.btn.setLayoutParams(new Params(this.WIDTH, this.HEIGHT));
         return this;
     },
 
-    setEffectColor: function(color) {
+    setEffectColor: function (color) {
         this.effectColor = color;
         return this;
     },
 
-    setBackgroundDrawable: function(drawable) {
+    setBackgroundDrawable: function (drawable) {
         this.drawable = drawable;
         this.btn.setBackgroundDrawable(drawable);
         return this;
     },
 
-    setOnClickListener: function(_listener) {
+    setOnClickListener: function (_listener) {
         this.listener = _listener;
         return this;
     },
 
-    getWidth: function() {
+    getWidth: function () {
         return this.WIDTH;
     },
 
-    getHeight: function() {
+    getHeight: function () {
         return this.HEIGHT;
     },
 
-    get: function() {
+    get: function () {
         var that = this;
         this.btn.setBackgroundDrawable(this.drawable);
         Utils.applyFont(this.btn);
@@ -404,21 +390,21 @@ pe.seize.widget.Button.prototype = {
         this.btn.setOnTouchListener(new OnTouchListener({
             onTouch: (view, event) => {
                 switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable);
-                        return true;
+                case MotionEvent.ACTION_DOWN:
+                    pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable);
+                    return true;
 
-                    case MotionEvent.ACTION_MOVE:
-                        pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable);
-                        return true;
+                case MotionEvent.ACTION_MOVE:
+                    pe.seize.graphics.drawable.drawCircle(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable);
+                    return true;
 
-                    case MotionEvent.ACTION_UP:
-                        pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable, that.listener);
-                        return true;
+                case MotionEvent.ACTION_UP:
+                    pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable, that.listener);
+                    return true;
 
-                    case MotionEvent.ACTION_CANCEL:
-                        pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable, that.listener);
-                        return true;
+                case MotionEvent.ACTION_CANCEL:
+                    pe.seize.graphics.drawable.RippleDrawable(view, that.WIDTH, that.HEIGHT, event.getX(), event.getY(), that.effectColor, that.drawable, that.listener);
+                    return true;
                 }
             }
         }));
@@ -426,13 +412,13 @@ pe.seize.widget.Button.prototype = {
         return this.btn;
     },
 
-    show: function(gravity, x, y) {
+    show: function (gravity, x, y) {
         Utils.render(this.get(), gravity, x, y);
     }
 };
 
 
-pe.seize.widget.CircleButton = function() {
+pe.seize.widget.CircleButton = function () {
     this.btn = new Button(pe.CONTEXT);
     this.text = "";
     this.radius = 50 * Utils.DP;
@@ -452,62 +438,65 @@ pe.seize.widget.CircleButton = function() {
 
 pe.seize.widget.CircleButton.prototype = {
 
-    setText: function(str) {
+    setText: function (str) {
         this.text = str;
         this.btn.setText(str);
         return this;
     },
 
-    setTextSize: function(size) {
+    setTextSize: function (size) {
         this.textSize = size;
         this.btn.setTextSize(size);
         return this;
     },
 
-    setTextColor: function(color) {
+    setTextColor: function (color) {
         this.textColor = color;
         this.btn.setTextColor(color);
         return this;
     },
 
-    setRadius: function(radius) {
+    setRadius: function (radius) {
         this.radius = radius;
         this.btn.setLayoutParams(new Params(this.radius * 2, this.radius * 2));
         return this;
     },
 
-    setColor: function(color) {
+    setColor: function (color) {
         this.color = color;
         return this;
     },
 
-    setBackgroundDrawable: function(drawable) {
+    setBackgroundDrawable: function (drawable) {
         this.drawable = drawable;
-        if (this.shapeDrawable != null) {
-            this._drawable = new LayerDrawable([shapeDrawable, this.drawable]);
+        if (this.shapeDrawable !== null) {
+            this._drawable = new LayerDrawable([this.shapeDrawable, this.drawable]);
             this.btn.setBackgroundDrawable(this._drawable);
         }
         return this;
     },
 
-    setEffectColor: function(color) {
+    setEffectColor: function (color) {
         this.effectColor = color;
         return this;
     },
 
-    setOnClickListener: function(_listener) {
+    setOnClickListener: function (_listener) {
         this.listener = _listener;
         return this;
     },
 
-    get: function() {
+    get: function () {
         var that = this;
 
         this.shapeDrawable = drawable.ShapeDrawable(new drawable.shapes.OvalShape());
         this.shapeDrawable.getPaint().setColor(this.color);
 
-        if (this.drawable == null) this._drawable = this.shapeDrawable;
-        else this._drawable = new LayerDrawable([this.shapeDrawable, this.drawable]);
+        if (this.drawable === null) {
+            this._drawable = this.shapeDrawable;
+        } else {
+            this._drawable = new LayerDrawable([this.shapeDrawable, this.drawable]);
+        }
 
         Utils.applyFont(this.btn);
         this.btn.setBackgroundDrawable(this._drawable);
@@ -515,18 +504,18 @@ pe.seize.widget.CircleButton.prototype = {
         this.btn.setOnTouchListener(new OnTouchListener({
             onTouch: (view, event) => {
                 switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        return true;
+                case MotionEvent.ACTION_DOWN:
+                    return true;
 
-                    case MotionEvent.ACTION_MOVE:
-                        return true;
+                case MotionEvent.ACTION_MOVE:
+                    return true;
 
-                    case MotionEvent.ACTION_UP:
-                        that.listener(view, event);
-                        return true;
+                case MotionEvent.ACTION_UP:
+                    that.listener(view, event);
+                    return true;
 
-                    case MotionEvent.ACTION_CANCEL:
-                        return true;
+                case MotionEvent.ACTION_CANCEL:
+                    return true;
                 }
             }
         }));
@@ -534,13 +523,13 @@ pe.seize.widget.CircleButton.prototype = {
         return this.btn;
     },
 
-    show: function(gravity, x, y) {
+    show: function (gravity, x, y) {
         Utils.render(this.get(), gravity, x, y);
     }
 };
 
 
-pe.seize.widget.CheckBox = function() {
+pe.seize.widget.CheckBox = function () {
     this.btn = new ToggleButton(pe.CONTEXT);
     this.textView = new TextView(pe.CONTEXT);
     this.btnLayout = new LinearLayout(pe.CONTEXT);
@@ -550,7 +539,7 @@ pe.seize.widget.CheckBox = function() {
     this.checked = false;
     this.textSize = 14;
     this.textColor = Color.BLACK;
-    this.color = color.rgb(54, 69, 154);
+    this.color = Color.rgb(54, 69, 154);
     this.listener = () => {};
 
     this.textView.setTextSize(14);
@@ -566,25 +555,25 @@ pe.seize.widget.CheckBox = function() {
 
 pe.seize.widget.CheckBox.prototype = {
 
-    setText: function(str) {
+    setText: function (str) {
         this.text = str;
         this.textView.setText(str);
         return this;
     },
 
-    setTextSize: function(size) {
+    setTextSize: function (size) {
         this.textSize = size;
         this.textView.setTextSize(size);
         return this;
     },
 
-    setTextColor: function(color) {
+    setTextColor: function (color) {
         this.textColor = color;
         this.textView.setTextColor(color);
         return this;
     },
 
-    setChecked: function(checked) {
+    setChecked: function (checked) {
         var that = this;
         Utils.uiThread(() => {
             that.checked = checked;
@@ -593,32 +582,32 @@ pe.seize.widget.CheckBox.prototype = {
         return this;
     },
 
-    setColor: function(color) {
+    setColor: function (color) {
         this.color = color;
         return this;
     },
 
-    setParams: function(width, height) {
+    setParams: function (width, height) {
         this.WIDTH = width;
         this.HEIGHT = height;
         this.btnLayout.setLayoutParams(new Params(this.WIDTH, this.HEIGHT));
         return this;
     },
 
-    setOnCheckedChangeListener: function(_listener) {
+    setOnCheckedChangeListener: function (_listener) {
         this.listener = _listener;
         return this;
     },
 
-    getWidth: function() {
+    getWidth: function () {
         return this.WIDTH;
     },
 
-    getHeight: function() {
+    getHeight: function () {
         return this.HEIGHT;
     },
 
-    get: function() {
+    get: function () {
         var that = this;
         this.btn.setBackgroundDrawable(pe.seize.graphics.drawable.CHECKBOX_OFF(this.color));
         this.btn.setLayoutParams(new Params(30 * DP, 30 * DP));
@@ -643,13 +632,13 @@ pe.seize.widget.CheckBox.prototype = {
         return this.btnLayout;
     },
 
-    show: function(gravity, x, y) {
+    show: function (gravity, x, y) {
         Utils.render(this.get(), gravity, x, y);
     }
 };
 
 
-pe.seize.widget.RadioButton = function() {
+pe.seize.widget.RadioButton = function () {
     this.btn = new ToggleButton(pe.CONTEXT);
     this.textView = new TextView(pe.CONTEXT);
     this.btnLayout = new LinearLayout(pe.CONTEXT);
@@ -675,25 +664,25 @@ pe.seize.widget.RadioButton = function() {
 
 pe.seize.widget.RadioButton.prototype = {
 
-    setText: function(str) {
+    setText: function (str) {
         this.text = str;
         this.textView.setText(str);
         return this;
     },
 
-    setTextSize: function(size) {
+    setTextSize: function (size) {
         this.textSize = size;
         this.textView.setTextSize(size);
         return this;
     },
 
-    setTextColor: function(color) {
+    setTextColor: function (color) {
         this.textColor = color;
         this.textView.setTextColor(color);
         return this;
     },
 
-    setChecked: function(checked) {
+    setChecked: function (checked) {
         var that = this;
         Utils.uiThread(() => {
             that.checked = checked;
@@ -702,32 +691,32 @@ pe.seize.widget.RadioButton.prototype = {
         return this;
     },
 
-    setColor: function(color) {
+    setColor: function (color) {
         this.color = color;
         return this;
     },
 
-    setParams: function(width, height) {
+    setParams: function (width, height) {
         this.WIDTH = width;
         this.HEIGHT = height;
         this.btnLayout.setLayoutParams(new Params(this.WIDTH, this.HEIGHT));
         return this;
     },
 
-    setOnCheckedChangeListener: function(_listener) {
+    setOnCheckedChangeListener: function (_listener) {
         this.listener = _listener;
         return this;
     },
 
-    getWidth: function() {
+    getWidth: function () {
         return this.WIDTH;
     },
 
-    getHeight: function() {
+    getHeight: function () {
         return this.HEIGHT;
     },
 
-    get: function() {
+    get: function () {
         var that = this;
         this.btn.setLayoutParams(new Params(30 * DP, 30 * DP));
         this.btn.setBackgroundDrawable(pe.seize.graphics.drawable.RADIO_OFF(that.color));
@@ -752,18 +741,18 @@ pe.seize.widget.RadioButton.prototype = {
         return this.btnLayout;
     },
 
-    show: function(gravity, x, y) {
+    show: function (gravity, x, y) {
         Utils.render(this.get(), gravity, x, y);
     }
 };
 
 
-pe.seize.widget.PopupWindow = function() {
+pe.seize.widget.PopupWindow = function () {
     this.window = new PopupWindow();
     this.mainLayout = new LinearLayout(pe.CONTEXT);
     this.titleLayout = new LinearLayout(pe.CONTEXT);
 
-    this.dismissListener = function() {};
+    this.dismissListener = function () {};
     this.WIDTH = WIDTH;
     this.HEIGHT = HEIGHT;
     var that = this;
@@ -803,7 +792,7 @@ pe.seize.widget.PopupWindow = function() {
         .setEffectColor(Color.argb(0, 0, 0, 0))
         .setBackgroundDrawable(pe.seize.graphics.drawable.CLOSE(Color.WHITE))
         .setOnClickListener(view => {
-            Utils.uiThread(function() {
+            Utils.uiThread(function () {
                 that.window.dismiss();
                 that.dismissListener();
             });
@@ -814,44 +803,44 @@ pe.seize.widget.PopupWindow = function() {
 
 pe.seize.widget.PopupWindow.prototype = {
 
-    setTitle: function(str) {
+    setTitle: function (str) {
         this.title.setText(str);
         return this;
     },
 
-    setTitleColor: function(color) {
+    setTitleColor: function (color) {
         this.titleLayout.setBackgroundDrawable(new ColorDrawable(color));
         return this;
     },
 
-    setOnDismissListener: function(listener) {
+    setOnDismissListener: function (listener) {
         this.dismissListener = listener;
         return this;
     },
 
-    setIcon: function(icon) {
+    setIcon: function (icon) {
         this.menuBtn.setBackgroundDrawable(icon);
         return this;
     },
 
-    setWidth: function(value) {
+    setWidth: function (value) {
         this.WIDTH = value;
         return this;
     },
 
-    setHeight: function(value) {
+    setHeight: function (value) {
         this.HEIGHT = value;
         return this;
     },
 
-    setContentView: function(view) {
+    setContentView: function (view) {
         this.mainLayout.addView(view);
         return this;
     },
 
-    show: function() {
+    show: function () {
         var that = this;
-        Utils.uiThread(function() {
+        Utils.uiThread(function () {
             that.window.setWidth(that.WIDTH);
             that.window.setHeight(that.HEIGHT);
             that.window.setContentView(that.mainLayout);
@@ -869,7 +858,7 @@ pe.seize.widget.PopupWindow.PopupStyle = {
 };
 
 
-pe.seize.widget.ProgressBar = function(style, width, height) {
+pe.seize.widget.ProgressBar = function (style, width, height) {
     this.style = style;
     this.max = 0;
     this.progress = 0;
@@ -877,7 +866,7 @@ pe.seize.widget.ProgressBar = function(style, width, height) {
     this.backgroundColor = Color.WHITE;
     this.width = width;
     this.height = height;
-    this.listener = function() {};
+    this.listener = function () {};
     this.showing = false;
 
     this.bar = new ProgressBar(pe.CONTEXT, null, R.attr.progressBarStyleHorizontal);
@@ -888,7 +877,7 @@ pe.seize.widget.ProgressBar = function(style, width, height) {
 
 pe.seize.widget.ProgressBar.prototype = {
 
-    setMax: function(value) {
+    setMax: function (value) {
         var that = this;
         Utils.uiThread(() => {
             that.max = value;
@@ -897,7 +886,7 @@ pe.seize.widget.ProgressBar.prototype = {
         return this;
     },
 
-    setProgress: function(value) {
+    setProgress: function (value) {
         var that = this;
         Utils.uiThread(() => {
             that.progress = value;
@@ -906,18 +895,18 @@ pe.seize.widget.ProgressBar.prototype = {
         return this;
     },
 
-    getMax: function() {
+    getMax: function () {
         return this.max;
     },
 
-    getProgress: function() {
+    getProgress: function () {
         return this.progress;
     },
 
-    get: function() {
+    get: function () {
         return this.bar;
     }
-}
+};
 
 pe.seize.widget.ProgressBar.ProgressBarStyle = {
     HORIZONTAL: 0,
@@ -926,12 +915,12 @@ pe.seize.widget.ProgressBar.ProgressBarStyle = {
 };
 
 
-pe.seize.widget.SeekBar = function() {
+pe.seize.widget.SeekBar = function () {
 
 };
 
 
-pe.seize.widget.TextView = function() {
+pe.seize.widget.TextView = function () {
     this.textView = new TextView(pe.CONTEXT);
 };
 
@@ -985,25 +974,31 @@ pe.seize.graphics = {
                 paint = new Paint();
 
             paint.setColor(color);
-            if (alpha != null) paint.setAlpha(alpha);
+
+            if (alpha !== null) {
+                paint.setAlpha(alpha);
+            }
+
             paint.setAntiAlias(true);
+            canvas.drawCircle(x, y, (radius === null ? 15 * DP : radius), paint);
 
-            canvas.drawCircle(x, y, (radius == null ? 15 * DP : radius), paint);
-
-            if (drawable == null) view.setBackgroundDrawable(new BitmapDrawable(bm));
-            else view.setBackgroundDrawable(new LayerDrawable([drawable, new BitmapDrawable(bm)]));
+            if (drawable === null) {
+                view.setBackgroundDrawable(new BitmapDrawable(bm));
+            } else {
+                view.setBackgroundDrawable(new LayerDrawable([drawable, new BitmapDrawable(bm)]));
+            }
         },
 
         RippleDrawable: (view, width, height, x, y, color, drawable, func, max_r, duration) => {
             var radius = 10 * DP,
-                max_radius = (max_r == null ? ((Math.hypot(width, height) / 2) + 100 * DP) : max_r),
+                max_radius = (max_r === null ? ((Math.hypot(width, height) / 2) + 100 * DP) : max_r),
                 click = false;
 
             var valueAnimator = ValueAnimator.ofFloat([radius, max_radius]),
                 _valueAnimatorX = ValueAnimator.ofFloat([x, width / 2]),
                 _valueAnimatorY = ValueAnimator.ofFloat([y, height / 2]);
 
-            duration = (duration == null ? 300 : duration);
+            duration = (duration === null ? 300 : duration);
 
             _valueAnimatorX.setDuration(duration);
             _valueAnimatorY.setDuration(duration);
@@ -1012,18 +1007,22 @@ pe.seize.graphics = {
                 onAnimationUpdate: _valueAnimator => {
                     var current_radius = _valueAnimator.getAnimatedValue(),
                         circle_point_x = _valueAnimatorX.getAnimatedValue(),
-                        circle_point_y = _valueAnimatorY.getAnimatedValue(),
-                        percent = 1 - (current_radius / max_radius);
+                        circle_point_y = _valueAnimatorY.getAnimatedValue();
 
                     if (current_radius < max_radius) {
                         pe.seize.graphics.drawable.drawCircle(view, width, height, circle_point_x, circle_point_y, color, drawable, current_radius, null);
                     }
 
-                    if (circle_point_x == width / 2) {
-                        if (drawable == null) view.setBackgroundDrawable(null);
-                        else view.setBackgroundDrawable(drawable);
+                    if (circle_point_x === width / 2) {
+                        if (drawable === null) {
+                            view.setBackgroundDrawable(null);
+                        } else {
+                            view.setBackgroundDrawable(drawable);
+                        }
 
-                        if (func != null && !click) func(view);
+                        if (func !== null && !click) {
+                            func(view);
+                        }
                         click = true;
                     }
                 }
@@ -1094,12 +1093,12 @@ pe.seize.graphics = {
 
 
 
-pe.seize.io.File = function(path) {
+pe.seize.io.File = function (path) {
     this._file = new File(path);
     this.path = path;
 };
 
-pe.seize.io.File.prototype.create = function() {
+pe.seize.io.File.prototype.create = function () {
     if (!this._file.getParentFile().exists()) {
         this._file.getParentFile().mkdirs();
     }
@@ -1107,15 +1106,15 @@ pe.seize.io.File.prototype.create = function() {
     return this;
 };
 
-pe.seize.io.File.prototype.read = function() {
+pe.seize.io.File.prototype.read = function () {
     if (this._file.exists()) {
-        var fis = new FileInputStream(path),
+        var fis = new FileInputStream(this.path),
             isr = new InputStreamReader(fis),
             br = new BufferedReader(isr),
             str = "",
             read = "";
 
-        while ((read = br.readLine()) != null) {
+        while ((read = br.readLine()) !== -1) {
             str += read + "\n";
         }
         br.close();
@@ -1127,9 +1126,9 @@ pe.seize.io.File.prototype.read = function() {
     return this;
 };
 
-pe.seize.io.File.prototype.write = function(str) {
+pe.seize.io.File.prototype.write = function (str) {
     var fos = new FileOutputStream(this.path);
-    fos.write(new String_(str).getBytes());
+    fos.write(new java.lang.String(str).getBytes());
     fos.close();
     return this;
 };
@@ -1142,9 +1141,15 @@ pe.android.widget = {
         var btn = new Button(pe.CONTEXT);
         btn.setText(text);
         Utils.applyFont(btn);
-        if (textColor != null) btn.setTextColor(textColor);
-        if (textSize != null) btn.setTextSize(textSize);
-        if (drawable != null) btn.setBackgroundDrawable(drawable);
+        if (textColor !== null) {
+            btn.setTextColor(textColor);
+        }
+        if (textSize !== null) {
+            btn.setTextSize(textSize);
+        }
+        if (drawable !== null) {
+            btn.setBackgroundDrawable(drawable);
+        }
         btn.setLayoutParams(new Params(width, height));
 
         return btn;
@@ -1154,9 +1159,15 @@ pe.android.widget = {
         var tv = new TextView(pe.CONTEXT);
         tv.setText(text);
         Utils.applyFont(tv);
-        if (textColor != null) tv.setTextColor(textColor);
-        if (textSize != null) tv.setTextSize(textSize);
-        if (drawable != null) tv.setBackgroundDrawable(drawable);
+        if (textColor !== null) {
+            tv.setTextColor(textColor);
+        }
+        if (textSize !== null) {
+            tv.setTextSize(textSize);
+        }
+        if (drawable !== null) {
+            tv.setBackgroundDrawable(drawable);
+        }
         tv.setLayoutParams(new Params(width, height));
 
         return tv;
@@ -1183,7 +1194,7 @@ pe.android.widget = {
         return tv;
     },
 
-    Divider: function(w, h, color) {
+    Divider: function (w, h, color) {
         var tv = new TextView(pe.CONTEXT);
         tv.setLayoutParams(new Params(w, h));
         tv.setBackgroundDrawable(null);
@@ -1203,11 +1214,12 @@ var selectLevelHook = () => {
             scope = script.scope,
             SO = org.mozilla.javascript.ScriptableObject;
 
-        if (SO.hasProperty(scope, "pe")) continue;
-        if (SO.hasProperty(scope, "Utils")) continue;
-
-        SO.putProperty(scope, "pe", pe);
-        SO.putProperty(scope, "Utils", Utils);
+        if (!SO.hasProperty(scope, "pe")) {
+            SO.putProperty(scope, "pe", pe);
+        }
+        if (!SO.hasProperty(scope, "Utils")) {
+            SO.putProperty(scope, "Utils", Utils);
+        }
     }
 };
 
