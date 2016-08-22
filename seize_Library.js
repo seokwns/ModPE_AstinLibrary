@@ -300,7 +300,7 @@ const Utils = {
             while (true) {
                 str = br.readLine();
                 if (str !== null) {
-                    split = str.split(' : ');
+                    split = str.split(" : ");
                     bundle.putString(split[0], split[1]);
                 }
             }
